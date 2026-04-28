@@ -1,0 +1,8 @@
+bin/
+report.json
+report.html
+coverage.out
+coverage.html
+config.yaml
+*.test
+.DS_Store
