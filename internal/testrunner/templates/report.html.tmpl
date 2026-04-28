@@ -99,6 +99,28 @@ footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px sol
 </tbody>
 </table>
 
+<h2>Test case details</h2>
+{{range .TestCases}}
+{{if and .Result .Result.AcceptanceChecks}}
+<details>
+<summary><strong>{{.ID}}</strong> — {{.Title}} <span class="status-{{.Result.Status}}">{{.Result.Status}}</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+{{range .Result.AcceptanceChecks}}
+<tr>
+  <td>{{.Description}}</td>
+  <td>{{if .Required}}yes{{else}}no{{end}}</td>
+  <td class="status-{{if .Pass}}PASS{{else}}FAIL{{end}}">{{if .Pass}}PASS{{else}}FAIL{{end}}</td>
+  <td>{{.Detail}}</td>
+</tr>
+{{end}}
+</tbody>
+</table>
+</details>
+{{end}}
+{{end}}
+
 <h2>Risks</h2>
 <table>
 <thead><tr><th>ID</th><th>Description</th><th>Mitigation</th><th>Mitigating tests</th></tr></thead>
