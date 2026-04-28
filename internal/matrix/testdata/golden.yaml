@@ -1,0 +1,61 @@
+# internal/matrix/testdata/golden.yaml
+# Frozen snapshot of every manifest entry by (ID, Kind, Title).
+# Drift between this file and manifest.go fails golden_test.go.
+- {id: FR-1,    kind: FR,  title: "Full Bitcoin SV Protocol Compliance"}
+- {id: FR-2,    kind: FR,  title: "Consistent Transaction and Block Formats"}
+- {id: FR-3,    kind: FR,  title: "Script Interpreter Parity"}
+- {id: FR-4,    kind: FR,  title: "Historical Chain Validation Evidence"}
+- {id: FR-5,    kind: FR,  title: "Reliable Transaction Propagation"}
+- {id: FR-6,    kind: FR,  title: "Block and Transaction Notification Reliability"}
+- {id: FR-7,    kind: FR,  title: "Support for Unconfirmed Transaction Chains"}
+- {id: FR-8,    kind: FR,  title: "Transaction Fee Estimation"}
+- {id: FR-9,    kind: FR,  title: "Double-Spend Detection and Notification"}
+- {id: FR-10,   kind: FR,  title: "Historical Data Access"}
+- {id: FR-11,   kind: FR,  title: "Mempool Query and Filtering"}
+- {id: NFR-1,   kind: NFR, title: "Upstream Availability Guarantees"}
+- {id: NFR-2,   kind: NFR, title: "Fault Tolerance and Recovery"}
+- {id: NFR-3,   kind: NFR, title: "Throughput and Latency Performance"}
+- {id: NFR-4,   kind: NFR, title: "Translation and Gateway Overhead"}
+- {id: NFR-5,   kind: NFR, title: "IPv4/IPv6 and Real-World Internet Compat."}
+- {id: NFR-6,   kind: NFR, title: "Interoperability Across Implementations"}
+- {id: NFR-7,   kind: NFR, title: "Deterministic Behavior Under Load"}
+- {id: NFR-8,   kind: NFR, title: "API Stability and Versioning"}
+- {id: NFR-9,   kind: NFR, title: "API Pricing and Access Model"}
+- {id: NFR-10,  kind: NFR, title: "Observability and Diagnostics"}
+- {id: NFR-11,  kind: NFR, title: "Security and Authentication"}
+- {id: NFR-12,  kind: NFR, title: "Data Consistency Guarantees"}
+- {id: NFR-13,  kind: NFR, title: "Rate Limiting and Throttling"}
+- {id: TE-1,    kind: TE,  title: "Testnet Deployment"}
+- {id: TE-2,    kind: TE,  title: "Client Integration Sandbox"}
+- {id: TE-3,    kind: TE,  title: "Private Test Network"}
+- {id: PC-1,    kind: TC,  title: "Parallel Node Comparison"}
+- {id: PC-2,    kind: TC,  title: "Historical Script and Consensus Regression"}
+- {id: PC-3,    kind: TC,  title: "Message Format and Wire Protocol Verification"}
+- {id: IBD-1,   kind: TC,  title: "Historical Validation Evidence Review"}
+- {id: IBD-2,   kind: TC,  title: "Historical UTXO Spend Verification"}
+- {id: PERF-1,  kind: TC,  title: "Throughput and Latency Baseline"}
+- {id: PERF-2,  kind: TC,  title: "Microservices Horizontal Scaling"}
+- {id: PERF-3,  kind: TC,  title: "Gateway and Translation Overhead"}
+- {id: INTER-1, kind: TC,  title: "Mixed-Network Consensus"}
+- {id: INTER-2, kind: TC,  title: "Cross-Implementation Transaction Propagation"}
+- {id: CLIENT-1, kind: TC, title: "TNG P2P Client Functional Tests"}
+- {id: CLIENT-2, kind: TC, title: "Extended Transaction Format Support"}
+- {id: CLIENT-3, kind: TC, title: "Notification Stream Reliability"}
+- {id: OPS-1,   kind: TC,  title: "Service Failure and Recovery"}
+- {id: OPS-2,   kind: TC,  title: "Network Partition and Reorg Convergence"}
+- {id: OPS-3,   kind: TC,  title: "Observability and Monitoring"}
+- {id: NEW-FR7,    kind: NEW, title: "Unconfirmed Transaction Chain Acceptance"}
+- {id: NEW-FR8,    kind: NEW, title: "Fee Estimation Endpoint Validation"}
+- {id: NEW-FR9,    kind: NEW, title: "Double-Spend Detection Behaviour"}
+- {id: NEW-FR10,   kind: NEW, title: "Historical Data Access Latency"}
+- {id: NEW-FR11,   kind: NEW, title: "Mempool Query Capabilities"}
+- {id: NEW-NFR7,   kind: NEW, title: "Deterministic Behaviour Under Repeated Operations"}
+- {id: NEW-NFR11,  kind: NEW, title: "Transport Security and Authentication Probe"}
+- {id: NEW-NFR13,  kind: NEW, title: "Rate Limit Discovery and Error Semantics"}
+- {id: R1, kind: R, title: "Transaction loss / inconsistent mempools (changed propagation, overlays)"}
+- {id: R2, kind: R, title: "Protocol fragmentation / forks (message formats, translation, interop gaps)"}
+- {id: R3, kind: R, title: "Undetected consensus bugs (script interpreter parity, historical flags)"}
+- {id: R4, kind: R, title: "Undetected consensus bugs (incomplete historical validation)"}
+- {id: R5, kind: R, title: "Excessive operational cost / API fees"}
+- {id: R6, kind: R, title: "Underdocumented architecture (txn trees, microservices, overlays)"}
+- {id: R7, kind: R, title: "Real-world IPv4/IPv6 connectivity and partition behaviour"}
