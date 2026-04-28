@@ -1,0 +1,14 @@
+# internal/overrides/testdata/valid.yaml
+reviewer: "Lars Jorgensen <l.jorgensen@teranode.group>"
+reviewed_at: "2026-04-29T14:00:00Z"
+overrides:
+  IBD-1:
+    decision: PASS
+    artefacts:
+      - "bsva-audit-2026-q1.pdf"
+    note: "Reviewed BSVA's IBD report dated 2026-03-15."
+  FR-4:
+    decision: PASS
+    artefacts:
+      - "bsva-audit-2026-q1.pdf"
+    note: "Same audit covers FR-4 evidence."

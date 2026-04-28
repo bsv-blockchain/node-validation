@@ -1,0 +1,8 @@
+# internal/overrides/testdata/missing-artefacts.yaml
+reviewer: "Test"
+reviewed_at: "2026-04-29T14:00:00Z"
+overrides:
+  IBD-1:
+    decision: PASS
+    artefacts: []
+    note: "Note without artefacts."
