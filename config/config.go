@@ -256,5 +256,3 @@ func mergeYAML(dst *Config, src Config) {
 	}
 }
 
-// Validate is a temporary stub — replaced in Task 8.
-func Validate(c *Config) error { return nil }
