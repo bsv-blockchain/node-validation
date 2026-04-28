@@ -67,7 +67,13 @@ func ComputeVerdict(results []Result, m matrix.Manifest, ovr overrides.File) Ver
 	// that is what IBD-1 verifies). NFR-* contractual / long-term rows are not Critical
 	// per source; we still require overrides for any critical row whose CoverageStatus is
 	// DOCUMENTATION_REVIEW or whose TestCaseStatus is EXCLUDED_DOCUMENTATION.
+	//
+	// Three cases:
+	//   - Override absent        → INCOMPLETE (reviewer hasn't signed off yet).
+	//   - Override = PASS        → row satisfied, continue.
+	//   - Override = FAIL        → reviewer explicitly rejected → NO_GO.
 	var needsOverride []string
+	var failedOverrides []string
 	for _, e := range m.Entries {
 		critical := false
 		// FR/NFR rows tied to a critical test inherit critical-ness through coverage.
@@ -80,8 +86,19 @@ func ComputeVerdict(results []Result, m matrix.Manifest, ovr overrides.File) Ver
 		if !critical {
 			continue
 		}
-		if o, ok := ovr.Overrides[e.ID]; !ok || o.Decision != overrides.DecisionPass {
+		o, ok := ovr.Overrides[e.ID]
+		if !ok {
 			needsOverride = append(needsOverride, e.ID)
+		} else if o.Decision == overrides.DecisionFail {
+			failedOverrides = append(failedOverrides, e.ID)
+		}
+		// DecisionPass: row satisfied — no action needed.
+	}
+	if len(failedOverrides) > 0 {
+		return Verdict{
+			Decision:  "NO_GO",
+			ExitCode:  1,
+			Rationale: "Reviewer explicitly rejected documentation review for: " + strings.Join(failedOverrides, ", "),
 		}
 	}
 	if len(needsOverride) > 0 {

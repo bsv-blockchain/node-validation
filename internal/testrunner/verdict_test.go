@@ -129,6 +129,24 @@ func TestVerdict_importantSkippedIsAcceptable(t *testing.T) {
 	}
 }
 
+func TestVerdict_overrideFailIsNoGo(t *testing.T) {
+	res := append(allCriticalPass(), allImportantPass()...)
+	ovr := overrides.File{
+		Reviewer: "x",
+		Overrides: map[string]overrides.Override{
+			"IBD-1": {Decision: overrides.DecisionFail, Artefacts: []string{"a"}, Note: "rejected"},
+			"FR-4":  {Decision: overrides.DecisionPass, Artefacts: []string{"a"}, Note: "ok"},
+			"NFR-1": {Decision: overrides.DecisionPass, Artefacts: []string{"a"}, Note: "ok"},
+			"NFR-8": {Decision: overrides.DecisionPass, Artefacts: []string{"a"}, Note: "ok"},
+			"NFR-9": {Decision: overrides.DecisionPass, Artefacts: []string{"a"}, Note: "ok"},
+		},
+	}
+	v := ComputeVerdict(res, matrix.Load(), ovr)
+	if v.Decision != "NO_GO" || v.ExitCode != 1 {
+		t.Errorf("override FAIL on Critical doc-review should yield NO_GO/1, got %s/%d (%s)", v.Decision, v.ExitCode, v.Rationale)
+	}
+}
+
 func TestVerdict_advisoryFailDoesNotDemote(t *testing.T) {
 	res := append(allCriticalPass(), allImportantPass()...)
 	res = append(res, resultFail("NEW-FR7", matrix.SeverityAdvisory))
