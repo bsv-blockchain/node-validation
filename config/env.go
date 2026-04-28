@@ -3,7 +3,6 @@ package config
 
 import (
 	"fmt"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -87,6 +86,5 @@ func lookupEnv(environ []string, key string) (string, bool) {
 			return strings.TrimPrefix(kv, prefix), true
 		}
 	}
-	// Fall through to process environment when caller didn't pass one.
-	return os.LookupEnv(key)
+	return "", false
 }
