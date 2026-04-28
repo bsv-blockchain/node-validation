@@ -29,7 +29,10 @@ gen: build
 
 verify: gen
 	@git diff --exit-code README.md docs/traceability.md \
-	  || (echo "README / traceability.md out of sync with manifest — run 'make gen' and commit the result" && exit 1)
+	  || (echo "README / traceability.md out of sync — run 'make gen' and commit" && exit 1)
+	@if [ -f docs/discovery.yaml ] && grep -q "^  - id:" docs/discovery.yaml ; then \
+	  go run ./scripts/check-refs.go --discovery docs/discovery.md --yaml docs/discovery.yaml --upstream /Users/oskarsson/gitcheckout/teranode ; \
+	fi
 
 clean:
 	rm -rf bin/ report.json report.html coverage.out coverage.html
