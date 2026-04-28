@@ -1,0 +1,40 @@
+# config/testdata/minimal.yaml
+network: testnet
+
+teranode:
+  rpc_url: "http://teranode.example:9292"
+  rest_url: "http://teranode.example:8090"
+  notification_url: "ws://teranode.example:8090/notifications"
+  p2p_address: "teranode.example:9905"
+  metrics_url: "http://teranode.example:9000/metrics"
+  health_url: "http://teranode.example:9000/health"
+
+svnode:
+  rpc_url: "http://svnode.example:18332"
+  rpc_user: "rpcuser"
+  rpc_pass: "rpcpass"
+  zmq_block_url: "tcp://svnode.example:28332"
+  zmq_tx_url: "tcp://svnode.example:28333"
+
+funding:
+  wif: ""
+  min_balance_satoshis: 100000000
+
+durations:
+  pc1_observation: 168h
+  inter1_observation: 336h
+  perf1_per_rate: 5m
+  default_propagation: 10s
+  client1_observation: 1h
+  new_nfr7_iterations: 100
+
+limits:
+  perf1_max_tps: 1000
+  inter2_tx_count: 1000
+  client3_tx_count: 500
+  fr7_chain_depth: 25
+  fr10_latency_target_ms: 100
+  fr8_priority_levels:
+    - economy
+    - standard
+    - priority
