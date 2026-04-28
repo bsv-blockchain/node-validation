@@ -3,6 +3,7 @@ package testrunner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"runtime/debug"
 	"slices"
@@ -54,6 +55,11 @@ func (s *Suite) Register(id string, fn TestFunc) {
 // Run executes registered tests sequentially. Tests filtered out by --only
 // or --skip appear in the result slice with Status = NOT_RUN. Returns one
 // Result per registered test, in registration order.
+//
+// Tests that ignore the passed context may continue to consume goroutine
+// resources until the process exits; the suite returns from Run either way
+// and reports such tests as StatusError with SkipReason: "timed out" or
+// "interrupted".
 func (s *Suite) Run(ctx context.Context) []Result {
 	results := make([]Result, 0, len(s.reg))
 	for _, r := range s.reg {
@@ -71,11 +77,9 @@ func (s *Suite) runOne(ctx context.Context, r registration) (out Result) {
 	}
 	out.StartedAt = s.env.Now()
 
-	// Filter handling.
 	if filtered, reason := s.filterReason(r.ID); filtered {
 		out.Status = StatusNotRun
 		out.SkipReason = reason
-		out.Duration = 0
 		return out
 	}
 
@@ -86,24 +90,43 @@ func (s *Suite) runOne(ctx context.Context, r registration) (out Result) {
 	tctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 
-	defer func() {
-		if rec := recover(); rec != nil {
-			out.Status = StatusError
-			out.Err = fmt.Sprintf("panic: %v\n%s", rec, debug.Stack())
-		}
-		out.Duration = s.env.Now().Sub(out.StartedAt)
+	resultCh := make(chan Result, 1)
+	panicCh := make(chan any, 1)
+	go func() {
+		defer func() {
+			if rec := recover(); rec != nil {
+				panicCh <- rec
+			}
+		}()
+		resultCh <- r.Fn(tctx, s.env)
 	}()
 
-	res := r.Fn(tctx, s.env)
-	res.ID = r.ID
-	if res.Title == "" {
-		res.Title = out.Title
+	select {
+	case res := <-resultCh:
+		res.ID = r.ID
+		if res.Title == "" {
+			res.Title = out.Title
+		}
+		res.Severity = r.Severity
+		res.StartedAt = out.StartedAt
+		res.SatisfiesRequirements = out.SatisfiesRequirements
+		res.Duration = s.env.Now().Sub(out.StartedAt)
+		return res
+	case rec := <-panicCh:
+		out.Status = StatusError
+		out.Err = fmt.Sprintf("panic: %v\n%s", rec, debug.Stack())
+		out.Duration = s.env.Now().Sub(out.StartedAt)
+		return out
+	case <-tctx.Done():
+		out.Status = StatusError
+		out.SkipReason = "interrupted"
+		if errors.Is(tctx.Err(), context.DeadlineExceeded) {
+			out.SkipReason = "timed out"
+		}
+		out.Err = tctx.Err().Error()
+		out.Duration = s.env.Now().Sub(out.StartedAt)
+		return out
 	}
-	res.Severity = r.Severity
-	res.StartedAt = out.StartedAt
-	res.SatisfiesRequirements = out.SatisfiesRequirements
-	out = res
-	return out
 }
 
 func (s *Suite) filterReason(id string) (bool, string) {

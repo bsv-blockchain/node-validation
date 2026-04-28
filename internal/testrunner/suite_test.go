@@ -127,4 +127,22 @@ func TestRun_filterOnlyMarksOthersNotRun(t *testing.T) {
 	}
 }
 
+func TestRun_timeoutWhenTestIgnoresCtx(t *testing.T) {
+	env := newTestEnv(t)
+	env.Cfg.TestTimeout = 50 * time.Millisecond
+	s := NewSuite(env)
+	s.Register("PC-1", func(ctx context.Context, e *Env) Result {
+		// Deliberately ignore ctx — sleep longer than timeout.
+		time.Sleep(500 * time.Millisecond)
+		return Result{ID: "PC-1", Status: StatusPass}
+	})
+	results := s.Run(context.Background())
+	if len(results) != 1 || results[0].Status != StatusError {
+		t.Fatalf("want 1 ERROR result on timeout, got %+v", results)
+	}
+	if results[0].SkipReason != "timed out" {
+		t.Errorf("want skip reason 'timed out', got %q", results[0].SkipReason)
+	}
+}
+
 var _ = errors.New
