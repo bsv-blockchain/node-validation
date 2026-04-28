@@ -35,19 +35,19 @@ type Check struct {
 
 // Result is what a test function returns.
 type Result struct {
-	ID                    string            `json:"id"`
-	Title                 string            `json:"title"`
-	Severity              matrix.Severity   `json:"severity"`
-	Status                Status            `json:"status"`
-	StartedAt             time.Time         `json:"started_at"`
-	Duration              time.Duration     `json:"duration_ns"`
-	AcceptanceChecks      []Check           `json:"acceptance_checks,omitempty"`
-	Observations          map[string]any    `json:"observations,omitempty"`
-	PartialEvidence       bool              `json:"partial_evidence,omitempty"`
-	SkipReason            string            `json:"skip_reason,omitempty"`
-	Err                   string            `json:"err,omitempty"`
-	CapturedRisks         []string          `json:"captured_risks,omitempty"`
-	SatisfiesRequirements []string          `json:"satisfies_requirements,omitempty"`
+	ID                    string          `json:"id"`
+	Title                 string          `json:"title"`
+	Severity              matrix.Severity `json:"severity"`
+	Status                Status          `json:"status"`
+	StartedAt             time.Time       `json:"started_at"`
+	Duration              time.Duration   `json:"duration_ns"`
+	AcceptanceChecks      []Check         `json:"acceptance_checks,omitempty"`
+	Observations          map[string]any  `json:"observations,omitempty"`
+	PartialEvidence       bool            `json:"partial_evidence,omitempty"`
+	SkipReason            string          `json:"skip_reason,omitempty"`
+	Err                   string          `json:"err,omitempty"`
+	CapturedRisks         []string        `json:"captured_risks,omitempty"`
+	SatisfiesRequirements []string        `json:"satisfies_requirements,omitempty"`
 }
 
 // TeranodeClients is the set of Teranode clients SP3+ tests need. Stays
