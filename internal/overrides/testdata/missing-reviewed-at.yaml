@@ -1,0 +1,8 @@
+# testdata: missing reviewed_at field
+reviewer: "Test Reviewer"
+overrides:
+  IBD-1:
+    decision: PASS
+    artefacts:
+      - "evidence.pdf"
+    note: "Some note."

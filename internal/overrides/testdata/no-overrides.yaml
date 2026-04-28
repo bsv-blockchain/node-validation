@@ -1,0 +1,3 @@
+# testdata: valid file with no overrides entries (nil map becomes empty)
+reviewer: "Test Reviewer"
+reviewed_at: "2026-04-29T14:00:00Z"

@@ -1,0 +1,9 @@
+# testdata: invalid decision value
+reviewer: "Test Reviewer"
+reviewed_at: "2026-04-29T14:00:00Z"
+overrides:
+  IBD-1:
+    decision: MAYBE
+    artefacts:
+      - "evidence.pdf"
+    note: "Some note."

@@ -1,0 +1,9 @@
+# testdata: missing note field
+reviewer: "Test Reviewer"
+reviewed_at: "2026-04-29T14:00:00Z"
+overrides:
+  IBD-1:
+    decision: PASS
+    artefacts:
+      - "evidence.pdf"
+    note: ""
