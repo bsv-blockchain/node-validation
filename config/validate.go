@@ -4,6 +4,7 @@ package config
 import (
 	"fmt"
 	"net/url"
+	"regexp"
 	"strings"
 
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
@@ -59,6 +60,13 @@ func Validate(c *Config) error {
 	checkURL("svnode.rpc_url", c.SVNode.RPCURL, "http", "https")
 	checkURL("svnode.zmq_block_url", c.SVNode.ZMQBlockURL, "tcp")
 	checkURL("svnode.zmq_tx_url", c.SVNode.ZMQTxURL, "tcp")
+
+	if c.Funding.WIF != "" {
+		wifPattern := regexp.MustCompile(`^[59KLc][1-9A-HJ-NP-Za-km-z]{50,51}$`)
+		if !wifPattern.MatchString(c.Funding.WIF) {
+			errs = append(errs, "funding.wif: not a valid base58 WIF (mainnet/testnet WIFs start with 5/K/L/c)")
+		}
+	}
 
 	if c.StrictConfig && c.Teranode.RPCURL == "" {
 		errs = append(errs, "teranode.rpc_url required under --strict-config")

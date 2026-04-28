@@ -109,4 +109,99 @@ func TestValidate_zeroDurations(t *testing.T) {
 	}
 }
 
+func TestValidate_unknownSkipID(t *testing.T) {
+	c := validBase()
+	c.Skip = []string{"BOGUS-99"}
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "BOGUS-99") {
+		t.Errorf("want unknown skip error, got %v", err)
+	}
+}
+
+func TestValidate_badURLMissingScheme(t *testing.T) {
+	c := validBase()
+	c.Teranode.RPCURL = "no-scheme-here"
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "scheme") {
+		t.Errorf("want missing-scheme error, got %v", err)
+	}
+}
+
+func TestValidate_badURLWrongScheme(t *testing.T) {
+	c := validBase()
+	c.Teranode.RPCURL = "ftp://teranode.example:9292"
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "scheme") {
+		t.Errorf("want wrong-scheme error, got %v", err)
+	}
+}
+
+func TestValidate_strictConfigRequiresRPCURL(t *testing.T) {
+	c := validBase()
+	c.StrictConfig = true
+	c.Teranode.RPCURL = ""
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "strict-config") {
+		t.Errorf("want strict-config error, got %v", err)
+	}
+}
+
+func TestValidate_mainnetLoadGateAllInScope(t *testing.T) {
+	c := validBase()
+	c.Network = NetworkMainnet
+	// No --only set: all in-scope tests checked; PERF-1 is load-generating.
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "allow-mainnet-load") {
+		t.Errorf("want mainnet-load error (all-in-scope), got %v", err)
+	}
+}
+
+func TestValidate_zeroDurationsMultiple(t *testing.T) {
+	tests := []struct {
+		name    string
+		mutate  func(*Config)
+		wantKey string
+	}{
+		{"inter1_observation", func(c *Config) { c.Durations.INTER1Observation = 0 }, "inter1_observation"},
+		{"perf1_per_rate", func(c *Config) { c.Durations.PERF1PerRate = 0 }, "perf1_per_rate"},
+		{"default_propagation", func(c *Config) { c.Durations.DefaultPropagation = 0 }, "default_propagation"},
+		{"client1_observation", func(c *Config) { c.Durations.CLIENT1Observation = 0 }, "client1_observation"},
+		{"new_nfr7_iterations", func(c *Config) { c.Durations.NewNFR7Iterations = 0 }, "new_nfr7_iterations"},
+		{"perf1_max_tps", func(c *Config) { c.Limits.PERF1MaxTPS = 0 }, "perf1_max_tps"},
+		{"inter2_tx_count", func(c *Config) { c.Limits.INTER2TxCount = 0 }, "inter2_tx_count"},
+		{"client3_tx_count", func(c *Config) { c.Limits.CLIENT3TxCount = 0 }, "client3_tx_count"},
+		{"fr7_chain_depth", func(c *Config) { c.Limits.FR7ChainDepth = 0 }, "fr7_chain_depth"},
+		{"fr10_latency_target_ms", func(c *Config) { c.Limits.FR10LatencyTargetMs = 0 }, "fr10_latency_target_ms"},
+		{"fr8_priority_levels", func(c *Config) { c.Limits.FR8PriorityLevels = nil }, "fr8_priority_levels"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := validBase()
+			tt.mutate(&c)
+			err := Validate(&c)
+			if err == nil || !strings.Contains(err.Error(), tt.wantKey) {
+				t.Errorf("want error containing %q, got %v", tt.wantKey, err)
+			}
+		})
+	}
+}
+
+func TestValidate_badWIFFormat(t *testing.T) {
+	c := validBase()
+	c.Funding.WIF = "not-a-wif"
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "wif") {
+		t.Errorf("want WIF format error, got %v", err)
+	}
+}
+
+func TestValidate_validWIFAccepted(t *testing.T) {
+	c := validBase()
+	// Sample compressed mainnet WIF (do not use this for real funds; it's a known test vector).
+	c.Funding.WIF = "L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ"
+	if err := Validate(&c); err != nil {
+		t.Errorf("valid WIF rejected: %v", err)
+	}
+}
+
 var _ = matrix.Load // keep matrix import live for test files
