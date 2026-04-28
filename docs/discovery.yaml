@@ -1,0 +1,5 @@
+# docs/discovery.yaml — machine-readable companion to discovery.md.
+# Authoritative for SP3 client code; markdown is for humans.
+upstream_commit: "<filled in by Task 4>"
+discovered_at:   "<filled in by Task 4>"
+surfaces: []

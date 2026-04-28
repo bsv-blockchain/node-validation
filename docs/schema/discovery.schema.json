@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Teranode discovery YAML",
+  "type": "object",
+  "required": ["upstream_commit", "discovered_at", "surfaces"],
+  "properties": {
+    "upstream_commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "discovered_at": { "type": "string", "format": "date-time" },
+    "surfaces": {
+      "type": "array",
+      "minItems": 11,
+      "maxItems": 11,
+      "items": {
+        "type": "object",
+        "required": ["id", "name", "present", "source_refs", "notes"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "json_rpc", "rest_asset", "notifications", "p2p",
+              "metrics", "health", "extended_tx",
+              "testmempoolaccept", "fee_estimation",
+              "mempool_query", "double_spend"
+            ]
+          },
+          "name": { "type": "string" },
+          "present": { "enum": [true, false, "partial"] },
+          "endpoint": { "type": "object" },
+          "auth": { "type": "object" },
+          "methods": { "type": "array" },
+          "source_refs": {
+            "type": "array",
+            "items": { "type": "string", "pattern": ".+:[0-9]+(-[0-9]+)?" }
+          },
+          "notes": { "type": "string" }
+        }
+      }
+    }
+  }
+}
