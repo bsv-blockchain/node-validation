@@ -1,0 +1,117 @@
+<!-- internal/testrunner/templates/report.html.tmpl -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teranode Acceptance Report — {{.Run.StartedAt.Format "2006-01-02"}}</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1100px; margin: 1em auto; padding: 0 1em; color: #1f2328; }
+h1, h2 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+.banner { padding: 1.2em; border-radius: 6px; color: white; font-size: 1.5em; font-weight: 600; }
+.go             { background: #1f883d; }
+.conditional_go { background: #d29922; }
+.no_go          { background: #cf222e; }
+.incomplete     { background: #6e7781; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 0.9em; }
+th, td { padding: 0.4em 0.6em; border: 1px solid #d0d7de; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; }
+.partial { background: #fff8c5; padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.8em; }
+details { margin: 0.5em 0; }
+summary { cursor: pointer; font-weight: 500; }
+.status-PASS  { color: #1a7f37; font-weight: 600; }
+.status-FAIL, .status-ERROR { color: #cf222e; font-weight: 600; }
+.status-SKIPPED, .status-NOT_RUN, .status-DEFERRED, .status-FEATURE_NOT_AVAILABLE { color: #6e7781; }
+footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #d0d7de; padding-top: 1em; }
+</style>
+</head>
+<body>
+<h1>Teranode Acceptance Tests</h1>
+<p>
+  <strong>Network:</strong> {{.Run.Network}} &middot;
+  <strong>Tool version:</strong> {{.Run.ToolVersion}} &middot;
+  <strong>Started:</strong> {{.Run.StartedAt.Format "2006-01-02 15:04:05 UTC"}} &middot;
+  <strong>Finished:</strong> {{.Run.FinishedAt.Format "2006-01-02 15:04:05 UTC"}}
+  {{if .Run.ShortMode}} <span class="partial">SHORT MODE</span>{{end}}
+</p>
+
+<div class="banner {{lower .Verdict.Decision}}">
+  Verdict: {{.Verdict.Decision}} (exit {{.Verdict.ExitCode}})<br>
+  <small style="font-weight: 400;">{{.Verdict.Rationale}}</small>
+</div>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Requirements</th><td>total {{.Summary.RequirementsTotal}}, satisfied {{.Summary.RequirementsSatisfied}}, deferred {{.Summary.RequirementsDeferred}}, failed {{.Summary.RequirementsFailed}}</td></tr>
+<tr><th>Test cases</th><td>{{.Summary.TestCasesInSourcePlan}} from source plan + {{.Summary.NewTestsAdded}} added (in scope: {{.Summary.TestCasesInScope}}; new passed: {{.Summary.NewTestsPassed}})</td></tr>
+<tr><th>Critical</th><td>pass {{.Summary.CriticalPass}} / fail {{.Summary.CriticalFail}}</td></tr>
+<tr><th>Important</th><td>pass {{.Summary.ImportantPass}} / fail {{.Summary.ImportantFail}}</td></tr>
+<tr><th>Advisory</th><td>pass {{.Summary.AdvisoryPass}} / fail {{.Summary.AdvisoryFail}}</td></tr>
+<tr><th>Risks</th><td>mitigated {{.Summary.RisksMitigated}}, partially {{.Summary.RisksPartiallyMitigated}}, not {{.Summary.RisksNotMitigated}}</td></tr>
+</table>
+
+<h2>Functional Requirements</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Coverage</th><th>Covered by</th><th>Result</th></tr></thead>
+<tbody>
+{{range .Requirements}}{{if eq .Type "FR"}}
+<tr><td>{{.ID}}</td><td>{{.Title}}</td><td>{{.MatrixStatus}}</td><td>{{join .CoveredBy ", "}}</td><td class="status-{{.ResultStatus}}">{{.ResultStatus}}</td></tr>
+{{end}}{{end}}
+</tbody>
+</table>
+
+<h2>Non-Functional Requirements</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Coverage</th><th>Covered by</th><th>Result</th></tr></thead>
+<tbody>
+{{range .Requirements}}{{if eq .Type "NFR"}}
+<tr><td>{{.ID}}</td><td>{{.Title}}</td><td>{{.MatrixStatus}}</td><td>{{join .CoveredBy ", "}}</td><td class="status-{{.ResultStatus}}">{{.ResultStatus}}</td></tr>
+{{end}}{{end}}
+</tbody>
+</table>
+
+<h2>Test Environment</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Status</th></tr></thead>
+<tbody>
+{{range .TestEnvironment}}
+<tr><td>{{.ID}}</td><td>{{.Title}}</td><td>{{.MatrixStatus}}</td></tr>
+{{end}}
+</tbody>
+</table>
+
+<h2>Test Cases</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+{{range .TestCases}}
+<tr>
+  <td>{{.ID}}</td><td>{{.Title}}</td><td>{{.Severity}}</td>
+  <td class="status-{{if .Result}}{{.Result.Status}}{{else}}{{.MatrixStatus}}{{end}}">
+    {{if .Result}}{{.Result.Status}}{{else}}{{.MatrixStatus}}{{end}}
+  </td>
+  <td>
+    {{if .ExclusionReason}}{{.ExclusionReason}}{{end}}
+    {{if .Result}}{{if .Result.SkipReason}}{{.Result.SkipReason}}{{end}}{{end}}
+    {{if .Result}}{{if .Result.PartialEvidence}}<span class="partial">partial evidence</span>{{end}}{{end}}
+  </td>
+</tr>
+{{end}}
+</tbody>
+</table>
+
+<h2>Risks</h2>
+<table>
+<thead><tr><th>ID</th><th>Description</th><th>Mitigation</th><th>Mitigating tests</th></tr></thead>
+<tbody>
+{{range .Risks}}
+<tr><td>{{.ID}}</td><td>{{.Description}}</td><td>{{.MitigationStatus}}</td><td>{{join .MitigatingTests ", "}}</td></tr>
+{{end}}
+</tbody>
+</table>
+
+<footer>
+Source plan: TNG Teranode Requirements and Test Plan, version 1.3 (28/04/2026).
+Tool: {{.Run.ToolVersion}}.
+</footer>
+</body>
+</html>
