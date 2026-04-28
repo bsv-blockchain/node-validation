@@ -7,17 +7,7 @@ import (
 )
 
 func TestLoad_appliesDefaults(t *testing.T) {
-	cfg, err := Load([]string{"--config", "/tmp/no-such.yaml"}, nil)
-	// /tmp/no-such.yaml is not the default name "config.yaml", so the
-	// missing file IS an error. Use the default-name path instead.
-	cfg, err = Load([]string{"--config", "config.yaml"}, nil)
-	// Default config.yaml may be missing; that's fine. We still get
-	// defaults populated and other validation may fire, but we only
-	// check that defaults made it through.
-	_ = cfg
-	_ = err
-	// Re-run with an explicit no-config-needed setup using a known testdata file:
-	cfg, err = Load([]string{"--config", "testdata/minimal.yaml", "--allow-mainnet-load"}, nil)
+	cfg, err := Load([]string{"--config", "testdata/minimal.yaml", "--allow-mainnet-load"}, nil)
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}

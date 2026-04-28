@@ -1,5 +1,6 @@
 .PHONY: build lint test test-short cover gen verify clean
 
+SHELL := /bin/bash
 GO := go
 LDFLAGS := -X main.version=$(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 
