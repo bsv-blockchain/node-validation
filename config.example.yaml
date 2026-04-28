@@ -1,0 +1,47 @@
+# Teranode acceptance-test suite — example configuration.
+#
+# Copy to config.yaml and edit. Secrets (rpc_pass, wif) ship commented out
+# so a fresh `cp config.example.yaml config.yaml` will produce a config that
+# cannot accidentally hit a real production network.
+
+network: testnet                    # mainnet | testnet | regtest
+
+teranode:
+  rpc_url: "http://teranode.example:9292"
+  # rpc_user: "<set via TNG_TERANODE_RPC_USER>"
+  # rpc_pass: "<set via TNG_TERANODE_RPC_PASS>"
+  rest_url: "http://teranode.example:8090"
+  notification_url: "ws://teranode.example:8090/notifications"
+  p2p_address: "teranode.example:9905"
+  metrics_url: "http://teranode.example:9000/metrics"
+  health_url: "http://teranode.example:9000/health"
+
+svnode:
+  rpc_url: "http://svnode.example:18332"
+  rpc_user: "rpcuser"
+  # rpc_pass: "<set via TNG_SVNODE_RPC_PASS>"
+  zmq_block_url: "tcp://svnode.example:28332"
+  zmq_tx_url: "tcp://svnode.example:28333"
+
+funding:
+  # wif: "<set via TNG_FUNDING_WIF — used by tests that broadcast transactions>"
+  min_balance_satoshis: 100000000   # warn if funded balance falls below this
+
+durations:
+  pc1_observation: 168h             # 7 days  (PC-1)
+  inter1_observation: 336h          # 14 days (INTER-1)
+  perf1_per_rate: 5m
+  default_propagation: 10s
+  client1_observation: 1h
+  new_nfr7_iterations: 100
+
+limits:
+  perf1_max_tps: 1000
+  inter2_tx_count: 1000
+  client3_tx_count: 500
+  fr7_chain_depth: 25
+  fr10_latency_target_ms: 100
+  fr8_priority_levels:
+    - economy
+    - standard
+    - priority
