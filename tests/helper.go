@@ -10,8 +10,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/bsv-blockchain/node-validation/internal/matrix"
-	"github.com/bsv-blockchain/node-validation/internal/svnode"
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
@@ -148,9 +146,3 @@ func classifyRateLimit(err error) (int, bool) {
 	}
 	return 0, false
 }
-
-// Compile-time guards: ensure the helper types depend on the right packages so
-// imports stay live in builds where some helpers aren't called.
-var _ matrix.Severity = matrix.SeverityCritical
-var _ *svnode.RPCClient
-var _ *teranode.RPCClient
