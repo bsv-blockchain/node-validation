@@ -1,0 +1,16 @@
+# HELP teranode_blockassembly_best_block_height Best block height known to block-assembly
+# TYPE teranode_blockassembly_best_block_height gauge
+teranode_blockassembly_best_block_height 12345
+# HELP teranode_blockchain_fsm_current_state FSM state numeric
+# TYPE teranode_blockchain_fsm_current_state gauge
+teranode_blockchain_fsm_current_state 4
+# HELP teranode_blockvalidation_catchup_active Catchup active flag
+# TYPE teranode_blockvalidation_catchup_active gauge
+teranode_blockvalidation_catchup_active 0
+# HELP teranode_validator_transactions Validator transactions histogram
+# TYPE teranode_validator_transactions histogram
+teranode_validator_transactions_bucket{le="0.005"} 0
+teranode_validator_transactions_bucket{le="0.01"} 5
+teranode_validator_transactions_bucket{le="+Inf"} 100
+teranode_validator_transactions_sum 0.45
+teranode_validator_transactions_count 100

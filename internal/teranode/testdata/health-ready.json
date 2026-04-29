@@ -1,0 +1,20 @@
+{
+  "status": "200",
+  "services": [
+    {
+      "service": "Blockchain",
+      "status": "200",
+      "dependencies": [
+        {"resource": "gRPC Server", "status": "200", "error": "<nil>", "message": "ok"},
+        {"resource": "Kafka", "status": "200", "error": "<nil>", "message": "ok"}
+      ]
+    },
+    {
+      "service": "BlockValidation",
+      "status": "200",
+      "dependencies": [
+        {"resource": "CatchupStatus", "status": "200", "error": "<nil>", "message": "active=false, last_time=2026-04-29T10:00:00Z, last_success=true, attempts=1, successes=1, rate=1.00"}
+      ]
+    }
+  ]
+}
