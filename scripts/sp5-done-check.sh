@@ -15,8 +15,8 @@ SP4DOCKER_SKIP_LIVE=1 ./scripts/sp4-docker-done-check.sh
 echo "==> tests/ package builds and unit tests pass"
 go test -race ./tests/...
 
-echo "==> register.go registers all 4 tests (verified by TestRegisterTests_SP5RegistersFour)"
-go test -race ./cmd/teranode-acceptance/... -run TestRegisterTests_SP5RegistersFour
+echo "==> register.go registers tests (any TestRegisterTests_* must pass)"
+go test -race ./cmd/teranode-acceptance/... -run '^TestRegisterTests_'
 
 if [ "${SP5_LIVE:-0}" = "1" ]; then
     echo "==> live: bringing up compose stack"
