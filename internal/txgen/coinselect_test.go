@@ -102,7 +102,7 @@ func TestSelectInputs_dustAbsorbed_feeIsActualResidual(t *testing.T) {
 
 func TestMarkSpent_removesUTXOs(t *testing.T) {
 	f := newFundedFunder(t, 1_000, 2_000, 3_000)
-	utxos := f.snapshotUTXOs()
+	utxos := f.SnapshotUTXOs()
 	f.MarkSpent(utxos[:2])
 	if got := f.Balance(); got != 3_000 {
 		t.Errorf("balance after spend: %d", got)
@@ -111,7 +111,7 @@ func TestMarkSpent_removesUTXOs(t *testing.T) {
 
 func TestConfirm_addsChange(t *testing.T) {
 	f := newFundedFunder(t, 10_000)
-	utxos := f.snapshotUTXOs()
+	utxos := f.SnapshotUTXOs()
 	change := UTXO{TxID: [32]byte{0xff}, Vout: 1, Satoshis: 5_000, Script: utxos[0].Script}
 	f.Confirm(utxos, &change)
 	if got := f.Balance(); got != 5_000 {

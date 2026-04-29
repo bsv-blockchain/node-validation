@@ -14,6 +14,7 @@ teranode:
   notification_url: "ws://teranode.example:8090/notifications"
   # p2p_legacy_address: "teranode.example:18333"  # Bitcoin wire P2P (8333 mainnet, 18333 testnet)
   p2p_address: "teranode.example:9905"             # libp2p TCP probe
+  p2p_ws_url: "ws://teranode.example:19906/p2p-ws"  # NEW-FR9 listens here
   metrics_url: "http://teranode.example:9000/metrics"
   health_url: "http://teranode.example:9000/health"
 

@@ -88,9 +88,9 @@ func (f *Funder) Reset() {
 	f.state.mu.Unlock()
 }
 
-// snapshotUTXOs returns a copy of the UTXO list under the lock. Used by
+// SnapshotUTXOs returns a copy of the UTXO list under the lock. Used by
 // SelectInputs and tests.
-func (f *Funder) snapshotUTXOs() []UTXO {
+func (f *Funder) SnapshotUTXOs() []UTXO {
 	f.state.mu.Lock()
 	defer f.state.mu.Unlock()
 	out := make([]UTXO, len(f.state.utxos))

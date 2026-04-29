@@ -10,7 +10,7 @@ import "fmt"
 // Returns the chosen inputs, the fee paid, and the change satoshis
 // (zero when change would be dust).
 func (f *Funder) SelectInputs(target uint64, outputs []Output, satPerKB uint64) (inputs []UTXO, fee uint64, change uint64, err error) {
-	utxos := f.snapshotUTXOs()
+	utxos := f.SnapshotUTXOs()
 	if len(utxos) == 0 {
 		return nil, 0, 0, fmt.Errorf("%w: no UTXOs", ErrInsufficientFunds)
 	}

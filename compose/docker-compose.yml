@@ -59,6 +59,7 @@ services:
       - "127.0.0.1:18000:8000"
       - "127.0.0.1:18444:18444"
       - "127.0.0.1:19905:9905"
+      - "127.0.0.1:19906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
     environment:
       SETTINGS_CONTEXT: docker.tng
       SETTINGS_APPLICATION: teranode1
@@ -76,6 +77,7 @@ services:
       - "127.0.0.1:28000:8000"
       - "127.0.0.1:28444:18444"
       - "127.0.0.1:29905:9905"
+      - "127.0.0.1:29906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
     environment:
       SETTINGS_CONTEXT: docker.tng
       SETTINGS_APPLICATION: teranode2
@@ -93,6 +95,7 @@ services:
       - "127.0.0.1:38000:8000"
       - "127.0.0.1:38444:18444"
       - "127.0.0.1:39905:9905"
+      - "127.0.0.1:39906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
     environment:
       SETTINGS_CONTEXT: docker.tng
       SETTINGS_APPLICATION: teranode3

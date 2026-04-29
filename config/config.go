@@ -54,6 +54,7 @@ type Teranode struct {
 	NotificationURL  string `yaml:"notification_url"`
 	P2PLegacyAddress string `yaml:"p2p_legacy_address"` // Bitcoin wire P2P (8333 mainnet, 18333 testnet)
 	P2PAddress       string `yaml:"p2p_address"`        // libp2p TCP listener (9905)
+	P2PWSURL         string `yaml:"p2p_ws_url"`         // raw /p2p-ws WebSocket (9906) for NEW-FR9
 	MetricsURL       string `yaml:"metrics_url"`
 	HealthURL        string `yaml:"health_url"`
 }
@@ -196,6 +197,9 @@ func mergeYAML(dst *Config, src Config) {
 	}
 	if src.Teranode.P2PAddress != "" {
 		dst.Teranode.P2PAddress = src.Teranode.P2PAddress
+	}
+	if src.Teranode.P2PWSURL != "" {
+		dst.Teranode.P2PWSURL = src.Teranode.P2PWSURL
 	}
 	if src.Teranode.MetricsURL != "" {
 		dst.Teranode.MetricsURL = src.Teranode.MetricsURL

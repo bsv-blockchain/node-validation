@@ -55,6 +55,7 @@ func Validate(c *Config) error {
 	checkURL("teranode.rpc_url", c.Teranode.RPCURL, "http", "https")
 	checkURL("teranode.rest_url", c.Teranode.RESTURL, "http", "https")
 	checkURL("teranode.notification_url", c.Teranode.NotificationURL, "ws", "wss", "http", "https")
+	checkURL("teranode.p2p_ws_url", c.Teranode.P2PWSURL, "ws", "wss", "http", "https")
 	checkURL("teranode.metrics_url", c.Teranode.MetricsURL, "http", "https")
 	checkURL("teranode.health_url", c.Teranode.HealthURL, "http", "https")
 	checkURL("svnode.rpc_url", c.SVNode.RPCURL, "http", "https")

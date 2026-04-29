@@ -14,6 +14,7 @@ type Clients struct {
 	REST          *RESTClient
 	Notifications *NotificationClient
 	P2PProbe      *P2PProbe
+	P2PWS         *P2PWSClient
 	Metrics       *MetricsScraper
 	Health        *HealthProbe
 }
@@ -45,11 +46,16 @@ func NewClients(cfg config.Teranode, logger *slog.Logger) (*Clients, error) {
 	if cfg.P2PLegacyAddress != "" || cfg.P2PAddress != "" {
 		p2p = NewP2PProbe(cfg.P2PLegacyAddress, cfg.P2PAddress, logger)
 	}
+	p2pws, err := NewP2PWSClient(cfg.P2PWSURL, logger)
+	if err != nil {
+		return nil, fmt.Errorf("teranode p2p-ws: %w", err)
+	}
 	return &Clients{
 		RPC:           rpc,
 		REST:          rest,
 		Notifications: notif,
 		P2PProbe:      p2p,
+		P2PWS:         p2pws,
 		Metrics:       met,
 		Health:        health,
 	}, nil

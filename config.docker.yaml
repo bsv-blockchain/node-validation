@@ -10,6 +10,7 @@ teranode:
   notification_url: "ws://localhost:18090/connection/websocket"
   p2p_legacy_address: "localhost:18444"
   p2p_address: "localhost:19905"
+  p2p_ws_url: "ws://localhost:19906/p2p-ws"
   metrics_url: "http://localhost:19091/metrics"
   health_url: "http://localhost:18000"
 
