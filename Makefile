@@ -7,6 +7,7 @@ LDFLAGS := -X main.version=$(shell git describe --tags --always --dirty 2>/dev/n
 build:
 	$(GO) build -ldflags "$(LDFLAGS)" -o bin/teranode-acceptance ./cmd/teranode-acceptance
 	$(GO) build -o bin/gen-traceability ./cmd/gen-traceability
+	$(GO) build -o bin/derive-address ./cmd/derive-address
 
 lint:
 	$(GO) vet ./...
