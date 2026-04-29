@@ -26,3 +26,5 @@ limits:
   fr7_chain_depth: 5
   fr10_latency_target_ms: 100
   fr8_priority_levels: [standard]
+  nfr13_max_probe_rate: 100
+  nfr13_probe_duration: 1s

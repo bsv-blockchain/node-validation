@@ -38,3 +38,5 @@ limits:
     - economy
     - standard
     - priority
+  nfr13_max_probe_rate: 100
+  nfr13_probe_duration: 1s

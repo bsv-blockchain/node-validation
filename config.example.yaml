@@ -46,3 +46,5 @@ limits:
     - economy
     - standard
     - priority
+  nfr13_max_probe_rate: 1000     # NEW-NFR13: max probe rate (req/s); 0 disables
+  nfr13_probe_duration: 5s       # NEW-NFR13: how long to ramp; 0 disables
