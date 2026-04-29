@@ -2,6 +2,7 @@
 upstream_commit: "11f5fa6a81c36490e2796561f76a39294fc422b5"
 upstream_branch: "test/longest-chain-double-spend"
 discovered_at:   "2026-04-29T16:00:00Z"
+discovered_by:   "discovery sub-agent fan-out (9 parallel Explore agents)"
 ---
 
 # Teranode External Interfaces — Discovery
@@ -1028,47 +1029,47 @@ env var > settings_local.conf > settings_test.conf > settings.conf (most-specifi
 
 ### Default ports table
 
-All port constants in `settings.conf:114-144` under `# @group: PORTS compact`. `PORT_PREFIX` (default `""`) is prepended in Docker multi-node setups.
+All port constants in `settings.conf:115-144` under `# @group: PORTS compact`. `PORT_PREFIX` (default `""`) is prepended in Docker multi-node setups.
 
 | Service | Default port | `.conf` key / constant | Go-code default | Source ref |
 |---|---|---|---|---|
-| JSON-RPC (HTTP) | **9292** | `TERANODE_RPC_PORT` / `rpc_listener_url=http://:9292` | `""` (fatal if unset) | `settings.conf:141`, `settings/settings.go:487`, `services/rpc/Server.go:1455` |
-| Asset REST/HTTP | **8090** | `ASSET_HTTP_PORT` / `asset_httpListenAddress=:8090` | `:8090` | `settings.conf:118,217`, `settings/settings.go:161` |
-| Asset Centrifuge (notifications) | **8892** (declared) — actually mounted on Asset HTTP `:8090` | `CENTRIFUGE_PORT` / `asset_centrifugeListenAddress=:8892` | `:8892` | `settings.conf:122,202`, `settings/settings.go:157` |
-| Blockchain gRPC | **8087** | `BLOCKCHAIN_GRPC_PORT` / `blockchain_grpcListenAddress=:8087` | `:8087` | `settings.conf:117,313`, `settings/settings.go:228` |
-| Blockchain HTTP | **8082** | `BLOCKCHAIN_HTTP_PORT` / `blockchain_httpListenAddress=:8082` | `:8082` | `settings.conf:118,320`, `settings/settings.go:229` |
-| Block Assembly gRPC | **8085** | `BLOCK_ASSEMBLY_GRPC_PORT` / `blockassembly_grpcListenAddress=:8085` | `:8085` | `settings.conf:119,262`, `settings/settings.go:198` |
-| Block Persister HTTP | **8083** | `BLOCK_PERSISTER_HTTP_PORT` / `blockPersister_httpListenAddress=:8083` | `:8083` | `settings.conf:120,229`, `settings/settings.go:170` |
-| Block Validation gRPC | **8088** | `BLOCK_VALIDATION_GRPC_PORT` / `blockvalidation_grpcListenAddress=:8088` | `:8088` | `settings.conf:121,406`, `settings/settings.go:241` |
-| Subtree Validation gRPC | **8086** | `SUBTREE_VALIDATION_GRPC_PORT` / `subtreevalidation_grpcListenAddress=:8086` | `:8089`* | `settings.conf:140`, `settings/settings.go:425` |
-> **Discrepancy noted.** `settings.conf:140` defines `SUBTREE_VALIDATION_GRPC_PORT=8086` but `settings/settings.go:425` Go fallback is `:8089`. The conf value wins at runtime; a node started without `settings.conf` would unexpectedly bind on `:8089`.
+| JSON-RPC (HTTP) | **9292** | `TERANODE_RPC_PORT` / `rpc_listener_url=http://:9292` | `""` (fatal if unset) | `settings.conf:142`, `settings/settings.go:487`, `services/rpc/Server.go:1455` |
+| Asset REST/HTTP | **8090** | `ASSET_HTTP_PORT` / `asset_httpListenAddress=:8090` | `:8090` | `settings.conf:117,217`, `settings/settings.go:161` |
+| Asset Centrifuge (notifications) | **8892** (declared) — actually mounted on Asset HTTP `:8090` | `CENTRIFUGE_PORT` / `asset_centrifugeListenAddress=:8892` | `:8892` | `settings.conf:123,202`, `settings/settings.go:157` |
+| Blockchain gRPC | **8087** | `BLOCKCHAIN_GRPC_PORT` / `blockchain_grpcListenAddress=:8087` | `:8087` | `settings.conf:118,313`, `settings/settings.go:228` |
+| Blockchain HTTP | **8082** | `BLOCKCHAIN_HTTP_PORT` / `blockchain_httpListenAddress=:8082` | `:8082` | `settings.conf:119,320`, `settings/settings.go:229` |
+| Block Assembly gRPC | **8085** | `BLOCK_ASSEMBLY_GRPC_PORT` / `blockassembly_grpcListenAddress=:8085` | `:8085` | `settings.conf:120,262`, `settings/settings.go:198` |
+| Block Persister HTTP | **8083** | `BLOCK_PERSISTER_HTTP_PORT` / `blockPersister_httpListenAddress=:8083` | `:8083` | `settings.conf:121,229`, `settings/settings.go:170` |
+| Block Validation gRPC | **8088** | `BLOCK_VALIDATION_GRPC_PORT` / `blockvalidation_grpcListenAddress=:8088` | `:8088` | `settings.conf:122,406`, `settings/settings.go:241` |
+| Subtree Validation gRPC | **8086** | `SUBTREE_VALIDATION_GRPC_PORT` / `subtreevalidation_grpcListenAddress=:8086` | `:8089`* | `settings.conf:141`, `settings/settings.go:425` |
+> **Discrepancy noted.** `settings.conf:141` defines `SUBTREE_VALIDATION_GRPC_PORT=8086` but `settings/settings.go:425` Go fallback is `:8089`. The conf value wins at runtime; a node started without `settings.conf` would unexpectedly bind on `:8089`.
 
 | Validator gRPC | **8081** | `VALIDATOR_GRPC_PORT` / `validator_grpcListenAddress=:8081` | `:8081` | `settings.conf:143,1482`, `settings/settings.go:299` |
 | Validator HTTP | **8834** | `VALIDATOR_HTTP_PORT` / `validator_httpListenAddress=:8834` | `""` | `settings.conf:144,1490`, `settings/settings.go:308` |
-| Propagation gRPC | **8084** | `PROPAGATION_GRPC_PORT` / `propagation_grpcListenAddress=:8084` | `""` | `settings.conf:138,989`, `settings/settings.go:477` |
-| Propagation HTTP | **8833** | `PROPAGATION_HTTP_PORT` / `propagation_httpListenAddress=:8833` | `""` | `settings.conf:139,1004`, `settings/settings.go:471` |
-| P2P libp2p TCP | **9905** | `P2P_PORT` / `p2p_port=9905` | `9906`* | `settings.conf:133,913`, `settings/settings.go:372` |
-| P2P gRPC | **9904** | `P2P_GRPC_PORT` / `p2p_grpcListenAddress=:9904` | `:9906`* | `settings.conf:131,867`, `settings/settings.go:367` |
-> **Discrepancy noted.** `settings.conf:131` defines `P2P_GRPC_PORT=9904` but `settings/settings.go:367` Go fallback is `:9906`. Conf value wins. Note that `:9906` is also the P2P HTTP port (`settings.conf:132`), so the Go fallback would collide.
+| Propagation gRPC | **8084** | `PROPAGATION_GRPC_PORT` / `propagation_grpcListenAddress=:8084` | `""` | `settings.conf:139,989`, `settings/settings.go:477` |
+| Propagation HTTP | **8833** | `PROPAGATION_HTTP_PORT` / `propagation_httpListenAddress=:8833` | `""` | `settings.conf:140,1004`, `settings/settings.go:471` |
+| P2P libp2p TCP | **9905** | `P2P_PORT` / `p2p_port=9905` | `9906`* | `settings.conf:134,913`, `settings/settings.go:372` |
+| P2P gRPC | **9904** | `P2P_GRPC_PORT` / `p2p_grpcListenAddress=:9904` | `:9906`* | `settings.conf:132,867`, `settings/settings.go:367` |
+> **Discrepancy noted.** `settings.conf:132` defines `P2P_GRPC_PORT=9904` but `settings/settings.go:367` Go fallback is `:9906`. Conf value wins. Note that `:9906` is also the P2P HTTP port (`settings.conf:133`), so the Go fallback would collide.
 
-| P2P HTTP | **9906** | `P2P_HTTP_PORT` / `p2p_httpListenAddress=:9906` | `""` | `settings.conf:132,880`, `settings/settings.go:369` |
-| P2P Bootstrap | **9901** | `P2P_BOOTSTRAP_PORT` | — | `settings.conf:130` |
-| Coinbase gRPC | **8093** | `COINBASE_GRPC_PORT` / `coinbase_grpcListenAddress=:8093` | `""` | `settings.conf:122,486`, `settings/settings.go:403` |
-| Coinbase P2P | **9907** | `P2P_PORT_COINBASE` / `p2p_port_coinbase` | `9906` | `settings.conf:134,916`, `settings/settings.go:417` |
-| Alert P2P | **9908** | `ALERT_P2P_PORT` | `9908` | `settings.conf:115`, `settings/settings.go:153` |
-| Legacy gRPC | **8099** | `LEGACY_GRPC_PORT` / `legacy_grpcListenAddress=:8099` | `""` | `settings.conf:128,687`, `settings/settings.go:459` |
-| Legacy HTTP | **8098** | `LEGACY_HTTP_PORT` / `legacy_httpListenAddress=:8098` | `""` | `settings.conf:129,699` |
-| Health check | **8000** | `HEALTH_CHECK_PORT` / `health_check_httpListenAddress=:8000` | `:8000` | `settings.conf:125,603`, `settings/settings.go:56` |
+| P2P HTTP | **9906** | `P2P_HTTP_PORT` / `p2p_httpListenAddress=:9906` | `""` | `settings.conf:133,880`, `settings/settings.go:369` |
+| P2P Bootstrap | **9901** | `P2P_BOOTSTRAP_PORT` | — | `settings.conf:131` |
+| Coinbase gRPC | **8093** | `COINBASE_GRPC_PORT` / `coinbase_grpcListenAddress=:8093` | `""` | `settings.conf:124,486`, `settings/settings.go:403` |
+| Coinbase P2P | **9907** | `P2P_PORT_COINBASE` / `p2p_port_coinbase` | `9906` | `settings.conf:135,916`, `settings/settings.go:417` |
+| Alert P2P | **9908** | `ALERT_P2P_PORT` | `9908` | `settings.conf:116`, `settings/settings.go:153` |
+| Legacy gRPC | **8099** | `LEGACY_GRPC_PORT` / `legacy_grpcListenAddress=:8099` | `""` | `settings.conf:129,687`, `settings/settings.go:459` |
+| Legacy HTTP | **8098** | `LEGACY_HTTP_PORT` / `legacy_httpListenAddress=:8098` | `""` | `settings.conf:130,699` |
+| Health check | **8000** | `HEALTH_CHECK_PORT` / `health_check_httpListenAddress=:8000` | `:8000` | `settings.conf:126,603`, `settings/settings.go:56` |
 | Profiler / pprof | **9091** | `PROFILE_PORT` / `profilerAddr=:9091` | `""` (disabled if empty) | `settings.conf:137,961`, `settings/settings.go:53` |
 | Prometheus metrics | served on `profilerAddr` at path `/metrics` | path `""` (disabled) | — | `settings.conf:965`, `settings/settings.go:55`, `daemon/daemon_services.go:188` |
-| Faucet HTTP | **8097** | `FAUCET_HTTP_PORT` / `faucet_httpListenAddress=:8097` | `""` | `settings.conf:124,575`, `settings/settings.go:492` |
-| Kafka | **9092** | `KAFKA_PORT=9092` | `9092` | `settings.conf:63`, `settings/settings.go:109` |
-| Aerospike | **3000** | `aerospike_port` | `3000` | `settings.conf:172`, `settings/settings.go:139` |
-| PostgreSQL | **5432** | `POSTGRES_PORT=5432` | — | `settings.conf:135` |
-| Jaeger UDP | **6831** | `JAEGER_PORT=6831` | — | `settings.conf:126` |
-| Jaeger HTTP (OTLP) | **4318** | `JAEGER_PORT_HTTP=4318` | `http://localhost:4318` | `settings.conf:127`, `settings/settings.go:43` |
+| Faucet HTTP | **8097** | `FAUCET_HTTP_PORT` / `faucet_httpListenAddress=:8097` | `""` | `settings.conf:125,575`, `settings/settings.go:492` |
+| Kafka | **9092** | `KAFKA_PORT=9092` | `9092` | `settings.conf:64`, `settings/settings.go:109` |
+| Aerospike | **3000** | `aerospike_port` | `3000` | `settings.conf:173`, `settings/settings.go:139` |
+| PostgreSQL | **5432** | `POSTGRES_PORT=5432` | — | `settings.conf:136` |
+| Jaeger UDP | **6831** | `JAEGER_PORT=6831` | — | `settings.conf:127` |
+| Jaeger HTTP (OTLP) | **4318** | `JAEGER_PORT_HTTP=4318` | `http://localhost:4318` | `settings.conf:128`, `settings/settings.go:43` |
 
-*\*Discrepancy: `settings.conf:140` defines `SUBTREE_VALIDATION_GRPC_PORT=8086` but `settings/settings.go:425` Go fallback is `:8089`. Conf wins. Similarly `P2P_GRPC_PORT` conf is 9904, Go fallback `:9906`. Conf wins.*
+*\*Discrepancy: `settings.conf:141` defines `SUBTREE_VALIDATION_GRPC_PORT=8086` but `settings/settings.go:425` Go fallback is `:8089`. Conf wins. Similarly `P2P_GRPC_PORT` conf is 9904, Go fallback `:9906`. Conf wins.*
 
 ### Auth flags table
 
