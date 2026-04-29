@@ -81,6 +81,25 @@ func TestSelectInputs_dustChangeAbsorbed(t *testing.T) {
 	}
 }
 
+func TestSelectInputs_dustAbsorbed_feeIsActualResidual(t *testing.T) {
+	f := newFundedFunder(t, 1_000_000)
+	outs := []Output{{Script: make([]byte, 25), Satoshis: 999_500}}
+	inputs, fee, change, err := f.SelectInputs(999_500, outs, 100)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if change != 0 {
+		t.Errorf("dust should be absorbed, got change=%d", change)
+	}
+	inputSum := uint64(0)
+	for _, in := range inputs {
+		inputSum += in.Satoshis
+	}
+	if fee != inputSum-999_500 {
+		t.Errorf("fee should equal inputSum-target=%d, got %d", inputSum-999_500, fee)
+	}
+}
+
 func TestMarkSpent_removesUTXOs(t *testing.T) {
 	f := newFundedFunder(t, 1_000, 2_000, 3_000)
 	utxos := f.snapshotUTXOs()

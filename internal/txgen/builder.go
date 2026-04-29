@@ -26,24 +26,59 @@ func (f *Funder) Builder() *Builder { return &Builder{funder: f} }
 // (the caller already specified scripts), funded by the funder's UTXOs.
 // A change output paying back to the funder's address is appended when
 // the residual exceeds the dust threshold.
+//
+// If req.SpendUTXO is non-nil, that UTXO is used as the sole input and
+// coin selection is skipped.
 func (b *Builder) BuildP2PKH(req BuildRequest) (BuildResult, error) {
+	if req.SpendUTXO != nil {
+		// Caller pinned a specific UTXO. Use it directly; skip coin selection.
+		in := *req.SpendUTXO
+		target := uint64(0)
+		for _, o := range req.Outputs {
+			target += o.Satoshis
+		}
+		// Estimate fee assuming this single input + outputs (+ possible change).
+		sizeWithChange := EstimateSize(1, append(req.Outputs, Output{Script: make([]byte, 25)}))
+		feeWithChange := ComputeFee(sizeWithChange, req.FeeRate)
+		change := uint64(0)
+		if in.Satoshis >= target+feeWithChange {
+			change = in.Satoshis - target - feeWithChange
+		}
+		if change < dustThresholdSats {
+			sizeNoChange := EstimateSize(1, req.Outputs)
+			feeNoChange := ComputeFee(sizeNoChange, req.FeeRate)
+			if in.Satoshis < target+feeNoChange {
+				return BuildResult{}, fmt.Errorf("%w: pinned UTXO has %d sat, need ≥%d", ErrInsufficientFunds, in.Satoshis, target+feeNoChange)
+			}
+			change = 0
+		}
+		return b.constructAndSign([]UTXO{in}, req.Outputs, change)
+	}
+
 	target := uint64(0)
 	for _, o := range req.Outputs {
 		target += o.Satoshis
 	}
 
-	inputs, fee, change, err := b.funder.SelectInputs(target, req.Outputs, req.FeeRate)
+	inputs, _, change, err := b.funder.SelectInputs(target, req.Outputs, req.FeeRate)
 	if err != nil {
 		return BuildResult{}, err
 	}
 
+	return b.constructAndSign(inputs, req.Outputs, change)
+}
+
+// constructAndSign builds and signs a transaction given the chosen inputs,
+// outputs, and a pre-computed change amount. A change output paying back to
+// the funder's address is appended when change > 0.
+func (b *Builder) constructAndSign(inputs []UTXO, outputs []Output, change uint64) (BuildResult, error) {
 	tx := bt.NewTx()
 	for _, in := range inputs {
 		if err := tx.From(hex.EncodeToString(in.TxID[:]), in.Vout, hex.EncodeToString(in.Script), in.Satoshis); err != nil {
 			return BuildResult{}, fmt.Errorf("tx.From: %w", err)
 		}
 	}
-	for _, o := range req.Outputs {
+	for _, o := range outputs {
 		out := &bt.Output{Satoshis: o.Satoshis, LockingScript: btScript(o.Script)}
 		tx.AddOutput(out)
 	}
@@ -76,7 +111,6 @@ func (b *Builder) BuildP2PKH(req BuildRequest) (BuildResult, error) {
 		changeUTXO.TxID = txidArr
 	}
 
-	_ = fee // already accounted in selection
 	return BuildResult{
 		TxID:   txidArr,
 		HexTx:  tx.String(),

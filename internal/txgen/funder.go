@@ -13,7 +13,6 @@ import (
 // Funder holds wallet state for the txgen package.
 type Funder struct {
 	rpc     RPCCaller
-	wif     string
 	key     *bec.PrivateKey
 	address string
 	state   *keyAndUTXOs
@@ -33,7 +32,15 @@ func NewFunder(rpc RPCCaller, wifStr string, logger *slog.Logger) (*Funder, erro
 	if err != nil {
 		return nil, fmt.Errorf("txgen: decode WIF: %w", err)
 	}
-	addr, err := bscript.NewAddressFromPublicKey(w.PrivKey.PubKey(), true)
+	// Detect network from WIF prefix: testnet/regtest WIFs start with 'c' or '9'.
+	mainnet := true
+	if len(wifStr) > 0 {
+		switch wifStr[0] {
+		case 'c', '9':
+			mainnet = false
+		}
+	}
+	addr, err := bscript.NewAddressFromPublicKey(w.PrivKey.PubKey(), mainnet)
 	if err != nil {
 		return nil, fmt.Errorf("txgen: derive address: %w", err)
 	}
@@ -42,7 +49,6 @@ func NewFunder(rpc RPCCaller, wifStr string, logger *slog.Logger) (*Funder, erro
 	}
 	return &Funder{
 		rpc:     rpc,
-		wif:     wifStr,
 		key:     w.PrivKey,
 		address: addr.AddressString,
 		state:   &keyAndUTXOs{key: w.PrivKey},

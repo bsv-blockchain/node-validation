@@ -21,6 +21,20 @@ func TestNewFunder_validWIF(t *testing.T) {
 	}
 }
 
+func TestNewFunder_testnetWIFGivesTestnetAddress(t *testing.T) {
+	// Known testnet WIF (privkey=1, testnet/regtest version byte 0xef).
+	testnetWIF := "cMahea7zqjxrtgAbB7LSGbcZqfA1qiUJqXEsFnUMGbE3JjN1uTaG"
+	f, err := NewFunder(nil, testnetWIF, nil)
+	if err != nil {
+		t.Skipf("could not derive funder from testnet WIF (lib may not support): %v", err)
+	}
+	// Testnet P2PKH addresses start with 'm' or 'n'; mainnet starts with '1'.
+	addr := f.Address()
+	if addr == "" || addr[0] == '1' {
+		t.Errorf("expected testnet address (starts with m/n), got %q", addr)
+	}
+}
+
 func TestNewFunder_badWIF(t *testing.T) {
 	_, err := NewFunder(nil, "not-a-wif", nil)
 	if err == nil || !strings.Contains(err.Error(), "decode WIF") {

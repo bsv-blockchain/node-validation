@@ -222,6 +222,23 @@ func TestBuildChain_depth25(t *testing.T) {
 	}
 }
 
+func TestBuildP2PKH_honoursSpendUTXO(t *testing.T) {
+	f, _ := NewFunder(nil, testdata.TestWIFRegtest, nil)
+	addrScript, _ := P2PKHScript(f.Address())
+	pinned := UTXO{TxID: [32]byte{0x99}, Vout: 5, Satoshis: 100_000_000, Script: addrScript}
+	res, err := f.Builder().BuildP2PKH(BuildRequest{
+		Outputs:   []Output{{Script: addrScript, Satoshis: 1_000}},
+		FeeRate:   500,
+		SpendUTXO: &pinned,
+	})
+	if err != nil {
+		t.Fatalf("BuildP2PKH: %v", err)
+	}
+	if len(res.Inputs) != 1 || res.Inputs[0].Vout != 5 {
+		t.Errorf("expected single pinned input vout=5, got %+v", res.Inputs)
+	}
+}
+
 func TestBuildChain_depthZeroRejected(t *testing.T) {
 	f := newFundedFunder(t, 1_000_000)
 	addrScript, _ := P2PKHScript(f.Address())

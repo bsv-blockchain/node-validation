@@ -32,7 +32,7 @@ func (f *Funder) SelectInputs(target uint64, outputs []Output, satPerKB uint64) 
 				sizeNoChange := EstimateSize(len(picked), outputs)
 				feeNoChange := ComputeFee(sizeNoChange, satPerKB)
 				if acc >= target+feeNoChange {
-					return picked, feeNoChange, 0, nil
+					return picked, acc - target, 0, nil // actual fee, not estimated
 				}
 				continue
 			}
@@ -47,7 +47,7 @@ func (f *Funder) SelectInputs(target uint64, outputs []Output, satPerKB uint64) 
 func (f *Funder) MarkSpent(spent []UTXO) {
 	f.state.mu.Lock()
 	defer f.state.mu.Unlock()
-	out := f.state.utxos[:0]
+	out := make([]UTXO, 0, len(f.state.utxos))
 	skip := make(map[[32]byte]map[uint32]bool, len(spent))
 	for _, s := range spent {
 		if skip[s.TxID] == nil {
