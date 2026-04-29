@@ -1,17 +1,17 @@
 // cmd/teranode-acceptance/register.go
 package main
 
-import "github.com/bsv-blockchain/node-validation/internal/testrunner"
+import (
+	"github.com/bsv-blockchain/node-validation/internal/testrunner"
+	"github.com/bsv-blockchain/node-validation/tests"
+)
 
 // registerTests is the single point where tests in the tests/ tree are
-// registered with the suite. Empty in SP1; later sub-projects add lines
-// like:
-//
-//	import "github.com/bsv-blockchain/node-validation/tests/pc1"
-//	suite.Register("PC-1", pc1.Run)
-//
-// Keep entries alphabetised by ID.
+// registered with the suite. Keep entries alphabetised by ID.
 func registerTests(suite *testrunner.Suite) {
-	// Intentionally empty. Tests are added in SP5+.
-	_ = suite
+	// Alphabetical by ID.
+	suite.Register("NEW-NFR11", tests.RunNEWNFR11)
+	suite.Register("NEW-NFR13", tests.RunNEWNFR13)
+	suite.Register("OPS-3", tests.RunOPS3)
+	suite.Register("PC-3", tests.RunPC3)
 }
