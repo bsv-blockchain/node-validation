@@ -1,5 +1,249 @@
 # docs/discovery.yaml — machine-readable companion to discovery.md.
 # Authoritative for SP3 client code; markdown is for humans.
-upstream_commit: "<filled in by Task 4>"
-discovered_at:   "<filled in by Task 4>"
-surfaces: []
+upstream_commit: "11f5fa6a81c36490e2796561f76a39294fc422b5"
+discovered_at:   "2026-04-29T16:00:00Z"
+surfaces:
+  - id: json_rpc
+    name: JSON-RPC service
+    present: true
+    endpoint:
+      url: "http://{host}:9292/"
+      method: POST
+      path: "/"
+      port: 9292
+    auth:
+      type: basic
+      description: "HTTP Basic Auth, two-tier admin/limited. Default bitcoin:bitcoin. SHA-256 hashed, constant-time compare."
+    methods:
+      - name: getbestblockhash
+        auth: limited
+        impl: true
+      - name: getblock
+        auth: limited
+        impl: true
+      - name: getblockchaininfo
+        auth: limited
+        impl: true
+      - name: getblockhash
+        auth: limited
+        impl: true
+      - name: getblockheader
+        auth: limited
+        impl: true
+      - name: getdifficulty
+        auth: limited
+        impl: true
+      - name: getinfo
+        auth: limited
+        impl: true
+      - name: getmininginfo
+        auth: admin
+        impl: true
+      - name: getpeerinfo
+        auth: admin
+        impl: true
+      - name: getrawmempool
+        auth: limited
+        impl: true
+      - name: getrawtransaction
+        auth: limited
+        impl: true
+      - name: sendrawtransaction
+        auth: limited
+        impl: true
+      - name: generate
+        auth: admin
+        impl: true
+      - name: generatetoaddress
+        auth: admin
+        impl: true
+      - name: getchaintips
+        auth: admin
+        impl: true
+      - name: invalidateblock
+        auth: admin
+        impl: true
+      - name: reconsiderblock
+        auth: admin
+        impl: true
+      - name: setban
+        auth: admin
+        impl: true
+      - name: listbanned
+        auth: admin
+        impl: true
+      - name: clearbanned
+        auth: admin
+        impl: true
+      - name: isbanned
+        auth: admin
+        impl: true
+      - name: stop
+        auth: admin
+        impl: true
+      - name: version
+        auth: limited
+        impl: true
+      - name: getminingcandidate
+        auth: limited
+        impl: true
+      - name: submitminingsolution
+        auth: limited
+        impl: true
+      - name: freeze
+        auth: admin
+        impl: true
+      - name: unfreeze
+        auth: admin
+        impl: true
+      - name: reassign
+        auth: admin
+        impl: true
+      - name: estimatefee
+        auth: limited
+        impl: false
+      - name: testmempoolaccept
+        auth: null
+        impl: false
+    source_refs:
+      - "services/rpc/Server.go:156-222"
+      - "services/rpc/Server.go:284-331"
+      - "services/rpc/Server.go:905-936"
+      - "settings.conf:142"
+      - "settings/settings.go:479-490"
+    notes: "HTTP/1.x, POST to /, JSON-RPC 1.0 wire format. Port via TERANODE_RPC_PORT (default 9292). rpc_max_clients=3. No TLS. Default creds bitcoin:bitcoin (plaintext in settings.conf)."
+
+  - id: rest_asset
+    name: REST / Asset HTTP API
+    present: true
+    endpoint:
+      url: "http://{host}:8090/api/v1"
+      port: 8090
+      prefix: "/api/v1"
+    auth:
+      type: none
+      description: "No auth on GET endpoints. Some POST endpoints (invalidate/revalidate, FSM) require dashboard session cookie when dashboard.enabled=true."
+    source_refs:
+      - "services/asset/httpimpl/http.go:164-361"
+      - "services/asset/Server.go:47-286"
+      - "settings/settings.go:156-164"
+    notes: "Echo v4 framework. Content negotiation by URL suffix: none=binary, /hex=hex, /json=JSON. 45 routes covering tx, block, header, UTXO, merkle proof, search, catchup, peers. No address-history route. Optional Ed25519 response signing via asset_sign_http_responses."
+
+  - id: notifications
+    name: Notifications (WebSocket / Centrifuge)
+    present: true
+    endpoint:
+      url: "ws://{host}:8090/connection/websocket"
+      port: 8090
+      path: "/connection/websocket"
+      protocol: "Centrifuge Protocol v2, unidirectional, JSON"
+    auth:
+      type: none
+      description: "authMiddleware injects hardcoded UserID:\"42\". No token or JWT required."
+    source_refs:
+      - "services/asset/centrifuge_impl/centrifuge.go:1-673"
+      - "services/asset/centrifuge_impl/websocket.go:17-19"
+      - "services/p2p/HandleWebsocket.go:1-289"
+      - "services/p2p/server_helpers.go:26-139"
+    notes: "Channels: block, subtree, node_status, ping (no producer), mining_on (deprecated/no producer). No message backfill on reconnect. Kafka (IBM/sarama) used for inter-service routing only — not a client-facing endpoint. No double-spend or reorg WebSocket channel."
+
+  - id: p2p
+    name: P2P listener
+    present: "partial"
+    endpoint:
+      legacy_port: 8333
+      libp2p_port: 9905
+      description: "Two separate listeners: legacy BSV-wire TCP on 8333 (mainnet), libp2p GossipSub TCP on 9905."
+    auth:
+      type: none
+      description: "Legacy: Bitcoin P2P handshake; inbound peers banned if UA does not contain 'Bitcoin SV' or 'BSV'. libp2p: noise encryption."
+    source_refs:
+      - "services/legacy/peer_server.go:63-68"
+      - "services/legacy/peer_server.go:541-549"
+      - "services/p2p/Server.go:298-302"
+      - "settings.conf:133-134"
+    notes: "partial: two distinct stacks. Legacy (port 8333/18333/18444 by network) speaks standard BSV wire protocol v70016. Teranode-native (port 9905) speaks libp2p with protocol ID /teranode/bitcoin/<network>/1.0.0. gRPC/HTTP control plane on 9906. Raw TCP probe insufficient for libp2p — requires go-libp2p host."
+
+  - id: metrics
+    name: Metrics endpoint (Prometheus)
+    present: true
+    endpoint:
+      url: "http://{host}:9091/metrics"
+      port: 9091
+      path: "/metrics"
+    auth:
+      type: none
+      description: "No authentication."
+    source_refs:
+      - "daemon/daemon_services.go:152-213"
+      - "settings.conf:961"
+      - "settings.conf:965"
+    notes: "Prometheus text format via prometheus/client_golang v1.23.2. Served on profilerAddr (:9091) alongside pprof. Key metrics: teranode_blockassembly_best_block_height (chain tip), teranode_blockchain_fsm_current_state (sync FSM), teranode_blockassembly_transactions (mempool size approx), teranode_blockvalidation_validate_block (latency histogram). All metric names use teranode_<subsystem>_<name> pattern."
+
+  - id: health
+    name: Health endpoint
+    present: true
+    endpoint:
+      url: "http://{host}:8000/health/readiness"
+      port: 8000
+      paths:
+        - "/health/readiness"
+        - "/health/liveness"
+        - "/health"
+    auth:
+      type: none
+      description: "No authentication."
+    source_refs:
+      - "daemon/daemon.go:306-363"
+      - "daemon/daemon.go:325-327"
+      - "util/servicemanager/service_manager.go:288-318"
+      - "settings.conf:126"
+    notes: "JSON body with status field (string '200' or '503'). Readiness checks gRPC, Kafka, downstream stores. Liveness is self-check only (most services return 200 unconditionally). Content-Type is text/plain even though body is JSON — do not assert content type. Use /health/readiness for SP3 dependency probing."
+
+  - id: extended_tx
+    name: Extended transaction format (BIP-239)
+    present: true
+    endpoint:
+      description: "Not a separate endpoint — all submission paths accept extended format."
+      paths:
+        - "POST /tx (propagation HTTP)"
+        - "gRPC ProcessTransaction"
+        - "JSON-RPC sendrawtransaction"
+    auth:
+      type: "same as submission endpoint"
+    source_refs:
+      - "docs/misc/BIP-239.md:1-89"
+      - "services/validator/Validator.go:428-440"
+      - "services/propagation/Server.go:849-956"
+    notes: "BIP-239 EF marker: 6-byte 0x00 0x00 0x00 0x00 0x00 0xEF after version field. Implemented via go-bt/v2 v2.5.0. Validator auto-extends standard-format txs by fetching UTXO data. Proto comment 'must be extended' is stale — no runtime enforcement. Retrieved bytes are non-extended; round-trip does not preserve EF marker."
+
+  - id: testmempoolaccept
+    name: testmempoolaccept analogue
+    present: false
+    source_refs: []
+    notes: "Searched services/rpc/Server.go rpcHandlersBeforeInit map (lines 156-222) — testmempoolaccept absent. Searched all handler files for dry-run or side-effect-free validation path — none found in public JSON-RPC or REST surface. Internal gRPC ValidateTransaction (validator_api.proto) accepts skip_utxo_creation+add_tx_to_block_assembly=false as approximate dry-run but is not exposed publicly. No structured testmempoolaccept-compatible response schema exists."
+
+  - id: fee_estimation
+    name: Fee estimation
+    present: false
+    source_refs: []
+    notes: "Searched services/rpc/Server.go for estimatefee, estimatesmartfee, estimatepriority. estimatefee is registered but routes to handleUnimplemented (returns ErrRPCUnimplemented -1). estimatepriority in rpcUnimplemented map (unknown command). estimatesmartfee not registered at all. No fee market data source exists. Only fee datum is static MinMiningTxFee policy floor (settings/policy.go). No priority levels (economy/standard/priority) implemented."
+
+  - id: mempool_query
+    name: Mempool query and filtering
+    present: "partial"
+    source_refs:
+      - "services/rpc/handlers.go:1249-1289"
+      - "services/rpc/Server.go:190"
+      - "services/blockassembly/Interface.go:140-148"
+    notes: "partial: getrawmempool (verbose=false) works — returns []string of tx hashes via GetTransactionHashes. getrawmempool(verbose=true) returns single aggregate result (not per-tx map). getmempoolentry declared in rpcUnimplemented — handler absent. getmempoolinfo registered as handleUnimplemented. getmempoolancestors/getmempooldescendants not registered anywhere. No fee-rate filtering exposed. Asset REST GET /api/v1/tx/:hash available for individual tx lookup but not mempool-specific."
+
+  - id: double_spend
+    name: Double-spend detection / notification
+    present: "partial"
+    source_refs:
+      - "services/validator/Validator.go:490-542"
+      - "stores/utxo/process_conflicting.go:50-175"
+      - "services/p2p/Server.go:741-804"
+      - "util/kafka/kafka_message/kafka_messages.proto:43-47"
+    notes: "partial: detection is complete (ErrSpent=70, ErrTxConflicting=36 at mempool layer; five-phase ProcessConflicting for reorgs). Notification via Kafka topic 'rejectedtx' (KafkaRejectedTxTopicMessage protobuf) and libp2p gossip. No dedicated WebSocket/webhook double-spend channel for clients. RPC bsvjson declares txaccepted/redeemingtx WS notification types but no dsdetected fires. Client must consume Kafka rejectedtx topic directly. DoubleSpendWindow defaults to 0ms (no hold-off)."
