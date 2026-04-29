@@ -10,6 +10,10 @@ import (
 // registered with the suite. Keep entries alphabetised by ID.
 func registerTests(suite *testrunner.Suite) {
 	// Alphabetical by ID.
+	suite.Register("CLIENT-2", tests.RunCLIENT2)
+	suite.Register("NEW-FR10", tests.RunNEWFR10)
+	suite.Register("NEW-FR11", tests.RunNEWFR11)
+	suite.Register("NEW-FR8", tests.RunNEWFR8)
 	suite.Register("NEW-NFR11", tests.RunNEWNFR11)
 	suite.Register("NEW-NFR13", tests.RunNEWNFR13)
 	suite.Register("OPS-3", tests.RunOPS3)

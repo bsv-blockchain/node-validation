@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"sort"
 	"strings"
 	"time"
 
@@ -125,6 +126,49 @@ func probeTLS(ctx context.Context, u *url.URL) (tlsInfo, error) {
 	}
 	state := tlsConn.ConnectionState()
 	return tlsInfo{Version: state.Version, Cipher: tls.CipherSuiteName(state.CipherSuite)}, nil
+}
+
+// measureLatency runs probeFn for each item in inputs sequentially,
+// records elapsed time, and returns the p95 latency (or 0 if inputs empty).
+// Errors from probeFn are still timed (the latency includes the
+// error-discovery time) but are also counted via the optional errCount
+// pointer.
+func measureLatency(ctx context.Context, _ string, inputs []string, probeFn func(string) error) time.Duration {
+	if len(inputs) == 0 {
+		return 0
+	}
+	durations := make([]time.Duration, 0, len(inputs))
+	for _, in := range inputs {
+		select {
+		case <-ctx.Done():
+			goto done
+		default:
+		}
+		start := time.Now()
+		_ = probeFn(in)
+		durations = append(durations, time.Since(start))
+	}
+done:
+	if len(durations) == 0 {
+		return 0
+	}
+	// Sort ascending and pick p95.
+	sort.Slice(durations, func(i, j int) bool { return durations[i] < durations[j] })
+	idx := int(float64(len(durations)) * 0.95)
+	if idx >= len(durations) {
+		idx = len(durations) - 1
+	}
+	return durations[idx]
+}
+
+// intRange returns ["start", "start+1", ..., "start+n-1"] as strings (for
+// measureLatency callers that walk a numeric range).
+func intRange(start, n int) []string {
+	out := make([]string, 0, n)
+	for i := 0; i < n; i++ {
+		out = append(out, fmt.Sprintf("%d", start+i))
+	}
+	return out
 }
 
 // classifyRateLimit inspects err for rate-limit-shaped indicators.

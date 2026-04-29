@@ -13,18 +13,21 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
 
-func TestRegisterTests_SP5RegistersFour(t *testing.T) {
+func TestRegisterTests_SP6RegistersEight(t *testing.T) {
 	cfg := config.Config{TestTimeout: time.Minute}
 	env := testrunner.NewEnv(cfg, slog.New(slog.NewTextHandler(os.Stderr, nil)), matrix.Load(), nil)
 	suite := testrunner.NewSuite(env)
 	registerTests(suite)
 	results := suite.Run(testContext(t))
-	// 4 registered tests — each runs once. Without env.Teranode/SVNode/TxGen,
+	// 8 registered tests — each runs once. Without env.Teranode/SVNode/TxGen,
 	// each test should self-skip (or error gracefully).
-	if len(results) != 4 {
-		t.Fatalf("expected 4 results, got %d", len(results))
+	if len(results) != 8 {
+		t.Fatalf("expected 8 results, got %d", len(results))
 	}
-	wantIDs := map[string]bool{"NEW-NFR11": false, "NEW-NFR13": false, "OPS-3": false, "PC-3": false}
+	wantIDs := map[string]bool{
+		"CLIENT-2": false, "NEW-FR10": false, "NEW-FR11": false, "NEW-FR8": false,
+		"NEW-NFR11": false, "NEW-NFR13": false, "OPS-3": false, "PC-3": false,
+	}
 	for _, r := range results {
 		if _, ok := wantIDs[r.ID]; ok {
 			wantIDs[r.ID] = true
