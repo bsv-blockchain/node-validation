@@ -205,3 +205,42 @@ func TestRPC_EstimateFee(t *testing.T) {
 		t.Errorf("f: %v", f)
 	}
 }
+
+func TestRPC_GetNewAddress(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		if method != "getnewaddress" {
+			t.Errorf("method: %s", method)
+		}
+		return "n3FreshAddr111111111111111111111111"
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "u", "p", nil)
+	a, err := c.GetNewAddress(context.Background())
+	if err != nil {
+		t.Fatalf("GetNewAddress: %v", err)
+	}
+	if a != "n3FreshAddr111111111111111111111111" {
+		t.Errorf("addr: %q", a)
+	}
+}
+
+func TestRPC_GenerateToAddress(t *testing.T) {
+	srv := newRPCStub(t, func(method string, params []any) any {
+		if method != "generatetoaddress" || len(params) != 2 {
+			t.Errorf("method=%s params=%v", method, params)
+		}
+		if params[0].(float64) != 5 {
+			t.Errorf("n: %v", params[0])
+		}
+		return []string{"hash1", "hash2", "hash3", "hash4", "hash5"}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "u", "p", nil)
+	hashes, err := c.GenerateToAddress(context.Background(), 5, "n3...")
+	if err != nil {
+		t.Fatalf("GenerateToAddress: %v", err)
+	}
+	if len(hashes) != 5 {
+		t.Errorf("hashes: %d want 5", len(hashes))
+	}
+}

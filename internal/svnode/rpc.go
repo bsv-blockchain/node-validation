@@ -130,3 +130,17 @@ func (c *RPCClient) TestMempoolAccept(ctx context.Context, hexTxs []string) (jso
 	var raw json.RawMessage
 	return raw, c.caller.Call(ctx, "testmempoolaccept", []any{hexTxs}, &raw)
 }
+
+// GetNewAddress returns a fresh address from the SV Node wallet.
+// Requires the node to have wallet support enabled.
+func (c *RPCClient) GetNewAddress(ctx context.Context) (string, error) {
+	var s string
+	return s, c.caller.Call(ctx, "getnewaddress", nil, &s)
+}
+
+// GenerateToAddress mines n blocks paying the coinbase to addr.
+// Returns the list of mined block hashes. Regtest only.
+func (c *RPCClient) GenerateToAddress(ctx context.Context, n int, addr string) ([]string, error) {
+	var hashes []string
+	return hashes, c.caller.Call(ctx, "generatetoaddress", []any{n, addr}, &hashes)
+}
