@@ -37,3 +37,26 @@ verify: gen
 
 clean:
 	rm -rf bin/ report.json report.html coverage.out coverage.html
+
+# --- Docker compose targets ---
+
+.PHONY: compose-up compose-down compose-logs compose-test compose-reset
+
+COMPOSE := docker compose -f compose/docker-compose.yml
+
+compose-up: build
+	$(COMPOSE) up -d
+	@echo "Waiting 10s for services to settle..."
+	@sleep 10
+	./compose/bootstrap.sh
+
+compose-down:
+	./compose/teardown.sh
+
+compose-logs:
+	$(COMPOSE) logs -f $${SERVICE:-teranode-1}
+
+compose-test: compose-up
+	./bin/teranode-acceptance --short --config config.docker.yaml || true
+
+compose-reset: compose-down
