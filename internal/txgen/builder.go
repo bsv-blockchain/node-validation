@@ -10,6 +10,10 @@ import (
 	"github.com/libsv/go-bt/v2/unlocker"
 )
 
+// MinChainDepthFR7 is the acceptance threshold for NEW-FR7: chain depth ≥25
+// must be constructable without error.
+const MinChainDepthFR7 = 25
+
 // Builder constructs and signs transactions on behalf of a Funder.
 type Builder struct {
 	funder *Funder
