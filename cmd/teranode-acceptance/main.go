@@ -15,6 +15,8 @@ import (
 	"github.com/bsv-blockchain/node-validation/config"
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
 	"github.com/bsv-blockchain/node-validation/internal/overrides"
+	"github.com/bsv-blockchain/node-validation/internal/svnode"
+	"github.com/bsv-blockchain/node-validation/internal/teranode"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
 
@@ -47,7 +49,19 @@ func run(args, environ []string, stdout, stderr *os.File) int {
 		return 4
 	}
 
+	teranodeClients, err := teranode.NewClients(cfg.Teranode, logger)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 4
+	}
+	svnodeClients, err := svnode.NewClients(cfg.SVNode, logger)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 4
+	}
 	env := testrunner.NewEnv(cfg, logger, manifest, time.Now)
+	env.Teranode = teranodeClients
+	env.SVNode = svnodeClients
 	suite := testrunner.NewSuite(env)
 	registerTests(suite)
 
