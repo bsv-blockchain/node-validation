@@ -18,6 +18,7 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/svnode"
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
+	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
 var version = "dev"
@@ -59,9 +60,22 @@ func run(args, environ []string, stdout, stderr *os.File) int {
 		fmt.Fprintln(stderr, err)
 		return 4
 	}
+	var txGen *txgen.Funder
+	if cfg.Funding.WIF != "" {
+		var rpcCaller txgen.RPCCaller
+		if svnodeClients != nil && svnodeClients.RPC != nil {
+			rpcCaller = svnodeClients.RPC
+		}
+		txGen, err = txgen.NewFunder(rpcCaller, cfg.Funding.WIF, logger)
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return 4
+		}
+	}
 	env := testrunner.NewEnv(cfg, logger, manifest, time.Now)
 	env.Teranode = teranodeClients
 	env.SVNode = svnodeClients
+	env.TxGen = txGen
 	suite := testrunner.NewSuite(env)
 	registerTests(suite)
 

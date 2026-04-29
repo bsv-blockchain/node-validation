@@ -12,6 +12,7 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
 	"github.com/bsv-blockchain/node-validation/internal/svnode"
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
+	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
 // Status is the outcome of a single test.
@@ -52,9 +53,6 @@ type Result struct {
 	SatisfiesRequirements []string        `json:"satisfies_requirements,omitempty"`
 }
 
-// TxGenerator is a placeholder for the transaction generator SP4 will fill in.
-type TxGenerator interface{}
-
 // Env is the per-run environment passed into every test.
 type Env struct {
 	Cfg      config.Config
@@ -64,7 +62,7 @@ type Env struct {
 
 	Teranode *teranode.Clients
 	SVNode   *svnode.Clients
-	TxGen    TxGenerator
+	TxGen    *txgen.Funder
 }
 
 // NewEnv constructs an Env with sane defaults.
