@@ -1,0 +1,8 @@
+# compose/svnode/bitcoin.conf.svnode-3
+disablewallet=1
+
+addnode=teranode-1:18444
+addnode=teranode-2:18444
+addnode=teranode-3:18444
+addnode=svnode-1:18444
+addnode=svnode-2:18444

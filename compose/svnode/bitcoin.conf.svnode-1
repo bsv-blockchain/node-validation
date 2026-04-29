@@ -1,0 +1,13 @@
+# compose/svnode/bitcoin.conf.svnode-1
+disablewallet=0
+
+# ZMQ — required by SP3 ZMQ subscriber tests
+zmqpubhashblock=tcp://0.0.0.0:28332
+zmqpubrawtx=tcp://0.0.0.0:28333
+
+# Mesh peers (5 others, identified by docker-compose service name)
+addnode=teranode-1:18444
+addnode=teranode-2:18444
+addnode=teranode-3:18444
+addnode=svnode-2:18444
+addnode=svnode-3:18444
