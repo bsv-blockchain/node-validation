@@ -51,3 +51,44 @@ func TestHealth_NilOnEmptyURL(t *testing.T) {
 		t.Fatalf("want (nil, nil), got (%v, %v)", h, err)
 	}
 }
+
+func TestHealth_Liveness(t *testing.T) {
+	srv := newHealthStub(t)
+	defer srv.Close()
+	h, _ := NewHealthProbe(srv.URL, nil)
+	r, err := h.Liveness(context.Background())
+	if err != nil {
+		t.Fatalf("Liveness: %v", err)
+	}
+	_ = r
+}
+
+func TestHealth_AllOKFailsOnBadService(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"status":"200","services":[{"service":"svc","status":"503","dependencies":[]}]}`))
+	}))
+	defer srv.Close()
+	h, _ := NewHealthProbe(srv.URL, nil)
+	r, err := h.Readiness(context.Background())
+	if err != nil {
+		t.Fatalf("Readiness: %v", err)
+	}
+	if r.AllOK() {
+		t.Error("AllOK should be false when a service has non-200 status")
+	}
+}
+
+func TestHealth_AllOKFailsOnTopLevel(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"status":"503","services":[]}`))
+	}))
+	defer srv.Close()
+	h, _ := NewHealthProbe(srv.URL, nil)
+	r, err := h.Readiness(context.Background())
+	if err != nil {
+		t.Fatalf("Readiness: %v", err)
+	}
+	if r.AllOK() {
+		t.Error("AllOK should be false when top-level status is not 200")
+	}
+}

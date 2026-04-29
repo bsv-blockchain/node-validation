@@ -94,3 +94,17 @@ func jsonInt(n int64) string {
 	b, _ := json.Marshal(n)
 	return string(b)
 }
+
+func TestError_ErrorMethod(t *testing.T) {
+	e := &Error{Code: -32600, Message: "invalid request"}
+	got := e.Error()
+	if !strings.Contains(got, "-32600") || !strings.Contains(got, "invalid request") {
+		t.Errorf("Error(): %q", got)
+	}
+}
+
+func TestIsErrorCode_NonRPCError(t *testing.T) {
+	if IsErrorCode(errors.New("plain error"), -1) {
+		t.Error("expected false for non-RPC error")
+	}
+}

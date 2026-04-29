@@ -99,3 +99,120 @@ func TestRPC_SendRawTransaction(t *testing.T) {
 		t.Errorf("id: %q", id)
 	}
 }
+
+func TestRPC_Call(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return "pong"
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	var out string
+	if err := c.Call(context.Background(), "ping", nil, &out); err != nil {
+		t.Fatalf("Call: %v", err)
+	}
+}
+
+func TestRPC_GetBlockHeader(t *testing.T) {
+	srv := newRPCStub(t, func(method string, params []any) any {
+		if method != "getblockheader" {
+			t.Errorf("method: %s", method)
+		}
+		return map[string]any{"hash": "abc"}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.GetBlockHeader(context.Background(), "abc", true); err != nil {
+		t.Fatalf("GetBlockHeader: %v", err)
+	}
+}
+
+func TestRPC_GetBlockHash(t *testing.T) {
+	srv := newRPCStub(t, func(method string, params []any) any {
+		if method != "getblockhash" {
+			t.Errorf("method: %s", method)
+		}
+		return "blockhash"
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	h, err := c.GetBlockHash(context.Background(), 0)
+	if err != nil {
+		t.Fatalf("GetBlockHash: %v", err)
+	}
+	if h != "blockhash" {
+		t.Errorf("h: %q", h)
+	}
+}
+
+func TestRPC_GetRawTransaction(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		if method != "getrawtransaction" {
+			t.Errorf("method: %s", method)
+		}
+		return "rawtx"
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.GetRawTransaction(context.Background(), "abc", 0); err != nil {
+		t.Fatalf("GetRawTransaction: %v", err)
+	}
+}
+
+func TestRPC_GetRawMempool(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return []string{"txid1", "txid2"}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	ids, err := c.GetRawMempool(context.Background())
+	if err != nil {
+		t.Fatalf("GetRawMempool: %v", err)
+	}
+	if len(ids) != 2 {
+		t.Errorf("len: %d", len(ids))
+	}
+}
+
+func TestRPC_GetMiningInfo(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return map[string]any{"blocks": 1}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.GetMiningInfo(context.Background()); err != nil {
+		t.Fatalf("GetMiningInfo: %v", err)
+	}
+}
+
+func TestRPC_GetPeerInfo(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return []any{}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.GetPeerInfo(context.Background()); err != nil {
+		t.Fatalf("GetPeerInfo: %v", err)
+	}
+}
+
+func TestRPC_GetChainTips(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return []any{}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.GetChainTips(context.Background()); err != nil {
+		t.Fatalf("GetChainTips: %v", err)
+	}
+}
+
+func TestRPC_Version(t *testing.T) {
+	srv := newRPCStub(t, func(method string, _ []any) any {
+		return map[string]any{"version": "1.0"}
+	})
+	defer srv.Close()
+	c, _ := NewRPCClient(srv.URL, "", "", nil)
+	if _, err := c.Version(context.Background()); err != nil {
+		t.Fatalf("Version: %v", err)
+	}
+}

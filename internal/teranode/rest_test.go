@@ -100,3 +100,45 @@ func TestREST_ListBlocksPagination(t *testing.T) {
 		t.Errorf("query: %q", seen)
 	}
 }
+
+func TestREST_WrapperMethods(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"ok":true}`))
+	}))
+	defer srv.Close()
+	c, _ := NewRESTClient(srv.URL+"/api/v1", nil)
+	ctx := context.Background()
+	if _, err := c.GetTxJSON(ctx, "abc"); err != nil {
+		t.Errorf("GetTxJSON: %v", err)
+	}
+	if _, err := c.GetBlockBytes(ctx, "abc"); err != nil {
+		t.Errorf("GetBlockBytes: %v", err)
+	}
+	if _, err := c.GetBlockJSON(ctx, "abc"); err != nil {
+		t.Errorf("GetBlockJSON: %v", err)
+	}
+	if _, err := c.GetBlockHeaderBytes(ctx, "abc"); err != nil {
+		t.Errorf("GetBlockHeaderBytes: %v", err)
+	}
+	if _, err := c.GetBlockHeaderJSON(ctx, "abc"); err != nil {
+		t.Errorf("GetBlockHeaderJSON: %v", err)
+	}
+	if _, err := c.GetBestBlockHeaderJSON(ctx); err != nil {
+		t.Errorf("GetBestBlockHeaderJSON: %v", err)
+	}
+	if _, err := c.GetUTXOJSON(ctx, "abc:0"); err != nil {
+		t.Errorf("GetUTXOJSON: %v", err)
+	}
+}
+
+func TestREST_ErrorMethodAndTruncate(t *testing.T) {
+	e := &RESTError{Status: 503, Path: "/api/v1/tx/x", Body: strings.Repeat("x", 200)}
+	msg := e.Error()
+	if !strings.Contains(msg, "503") {
+		t.Errorf("error missing status: %s", msg)
+	}
+	// truncate should kick in at 160 chars
+	if !strings.Contains(msg, "...") {
+		t.Errorf("expected truncation in: %s", msg)
+	}
+}

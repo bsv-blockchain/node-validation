@@ -69,3 +69,38 @@ func TestZMQ_NilOnAllEmpty(t *testing.T) {
 		t.Fatalf("want (nil, nil), got (%v, %v)", c, err)
 	}
 }
+
+func TestZMQ_TxsRoundTrip(t *testing.T) {
+	port := freeTCPPort(t)
+	endpoint := fmt.Sprintf("tcp://127.0.0.1:%d", port)
+	pub := zmq4.NewPub(context.Background())
+	if err := pub.Listen(endpoint); err != nil {
+		t.Fatalf("pub listen: %v", err)
+	}
+	defer pub.Close()
+
+	// Use txURL so the tx pump starts.
+	c, _ := NewZMQClient("", endpoint, nil)
+	if err := c.Connect(context.Background()); err != nil {
+		t.Fatalf("Connect: %v", err)
+	}
+	defer c.Close()
+
+	time.Sleep(50 * time.Millisecond)
+
+	rawTx := []byte{0x01, 0x00, 0x00, 0x00}
+	seq := make([]byte, 4)
+	binary.LittleEndian.PutUint32(seq, 3)
+	if err := pub.Send(zmq4.NewMsgFrom([]byte("rawtx"), rawTx, seq)); err != nil {
+		t.Fatalf("pub send: %v", err)
+	}
+
+	select {
+	case tx := <-c.Txs():
+		if tx.Sequence != 3 {
+			t.Errorf("seq: %d", tx.Sequence)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no tx received")
+	}
+}
