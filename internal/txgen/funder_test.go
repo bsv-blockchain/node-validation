@@ -2,7 +2,6 @@ package txgen
 
 import (
 	"context"
-	"errors"
 	"strings"
 	"testing"
 
@@ -93,4 +92,3 @@ func (f *fakeRPC) Call(_ context.Context, method string, params []any, out any) 
 }
 
 var _ RPCCaller = (*fakeRPC)(nil)
-var errSentinel = errors.New("sentinel")

@@ -51,9 +51,6 @@ var ErrNoWallet = errors.New("txgen: SV Node wallet not available")
 // folded into the fee rather than emitted.
 const dustThresholdSats uint64 = 546
 
-// opReturnMaxSize caps OP_RETURN payloads so tests stay bounded.
-const opReturnMaxSize = 100 * 1024
-
 // keyAndUTXOs is what Funder protects with its mutex.
 type keyAndUTXOs struct {
 	key   *bec.PrivateKey
