@@ -68,6 +68,12 @@ func TestRPC_NilOnEmptyURL(t *testing.T) {
 	}
 }
 
+func TestRPC_RejectsURLWithoutScheme(t *testing.T) {
+	if _, err := NewRPCClient("garbage", "", "", nil); err == nil {
+		t.Fatal("want error for URL without scheme")
+	}
+}
+
 func TestRPC_GetBlockPassesParams(t *testing.T) {
 	srv := newRPCStub(t, func(method string, params []any) any {
 		if method != "getblock" || len(params) != 2 || params[0].(string) != "abc" || params[1].(float64) != 1 {

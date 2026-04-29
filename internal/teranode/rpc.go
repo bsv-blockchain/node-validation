@@ -26,8 +26,12 @@ func NewRPCClient(rawURL, user, pass string, logger *slog.Logger) (*RPCClient, e
 	if rawURL == "" {
 		return nil, nil
 	}
-	if _, err := url.Parse(rawURL); err != nil {
+	u, err := url.Parse(rawURL)
+	if err != nil {
 		return nil, fmt.Errorf("teranode rpc url %q: %w", rawURL, err)
+	}
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("teranode rpc url %q: missing scheme or host", rawURL)
 	}
 	if logger == nil {
 		logger = slog.Default()

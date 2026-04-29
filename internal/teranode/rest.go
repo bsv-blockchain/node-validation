@@ -30,6 +30,9 @@ func NewRESTClient(rawURL string, logger *slog.Logger) (*RESTClient, error) {
 	if err != nil {
 		return nil, fmt.Errorf("teranode rest url %q: %w", rawURL, err)
 	}
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("teranode rest url %q: missing scheme or host", rawURL)
+	}
 	if logger == nil {
 		logger = slog.Default()
 	}

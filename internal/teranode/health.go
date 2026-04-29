@@ -28,6 +28,9 @@ func NewHealthProbe(rawURL string, logger *slog.Logger) (*HealthProbe, error) {
 	if err != nil {
 		return nil, fmt.Errorf("teranode health url %q: %w", rawURL, err)
 	}
+	if u.Scheme == "" || u.Host == "" {
+		return nil, fmt.Errorf("teranode health url %q: missing scheme or host", rawURL)
+	}
 	if logger == nil {
 		logger = slog.Default()
 	}

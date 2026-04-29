@@ -25,7 +25,6 @@ type NotificationClient struct {
 
 	mu        sync.Mutex
 	connected bool
-	closed    bool
 }
 
 func NewNotificationClient(rawURL string, logger *slog.Logger) (*NotificationClient, error) {
@@ -89,9 +88,6 @@ func (c *NotificationClient) Connect(ctx context.Context) error {
 }
 
 func (c *NotificationClient) Close() error {
-	c.mu.Lock()
-	c.closed = true
-	c.mu.Unlock()
 	_ = c.client.Disconnect()
 	return nil
 }
