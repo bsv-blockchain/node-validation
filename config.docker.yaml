@@ -1,0 +1,46 @@
+# config.docker.yaml — points the suite at the local docker-compose stack.
+# Bootstrap mines blocks and funds the WIF below.
+network: regtest
+
+teranode:
+  rpc_url: "http://localhost:19292"
+  rpc_user: "bitcoin"
+  rpc_pass: "bitcoin"
+  rest_url: "http://localhost:18090/api/v1"
+  notification_url: "ws://localhost:18090/connection/websocket"
+  p2p_legacy_address: "localhost:18444"
+  p2p_address: "localhost:19905"
+  metrics_url: "http://localhost:19091/metrics"
+  health_url: "http://localhost:18000"
+
+svnode:
+  rpc_url: "http://localhost:18332"
+  rpc_user: "bitcoin"
+  rpc_pass: "bitcoin"
+  zmq_block_url: "tcp://localhost:28332"
+  zmq_tx_url: "tcp://localhost:28333"
+
+funding:
+  # Public test vector WIF (privkey=1, mainnet form). Bootstrap derives
+  # the regtest address via cmd/derive-address. Never use for real funds.
+  wif: "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
+  min_balance_satoshis: 100000000
+
+durations:
+  pc1_observation: 30m
+  inter1_observation: 1h
+  perf1_per_rate: 30s
+  default_propagation: 10s
+  client1_observation: 5m
+  new_nfr7_iterations: 50
+
+limits:
+  perf1_max_tps: 100
+  inter2_tx_count: 100
+  client3_tx_count: 50
+  fr7_chain_depth: 25
+  fr10_latency_target_ms: 100
+  fr8_priority_levels:
+    - economy
+    - standard
+    - priority
