@@ -7,9 +7,10 @@ methodology from scratch.
 ## Upstream pinning
 
 - Repository: `/Users/oskarsson/gitcheckout/teranode/`
-- Commit:     `<filled in by Task 4>`
-- Branch:     `<filled in by Task 4>`
-- Captured:   `<filled in by Task 4>`
+- Commit:     `11f5fa6a81c36490e2796561f76a39294fc422b5`
+- Branch:     `test/longest-chain-double-spend`
+- Captured:   `2026-04-29T16:00:00Z`
+- Captured by: discovery sub-agent fan-out
 
 ## Agent fan-out
 
@@ -17,15 +18,15 @@ Nine parallel `Explore` agents, each over `/Users/oskarsson/gitcheckout/teranode
 
 | # | Surface(s) | Search anchors |
 |---|---|---|
-| 1 | JSON-RPC + auth model | (filled in by Task 3) |
-| 2 | REST / Asset HTTP API | (filled in by Task 3) |
-| 3 | Notifications (WS / SSE / gRPC / Kafka) | (filled in by Task 3) |
-| 4 | P2P listener | (filled in by Task 3) |
-| 5 | Metrics + Health | (filled in by Task 3) |
-| 6 | Extended transaction format | (filled in by Task 3) |
-| 7 | Mempool + testmempoolaccept + fee estimation | (filled in by Task 3) |
-| 8 | Double-spend detection / notification | (filled in by Task 3) |
-| 9 | Settings / configuration | (filled in by Task 3) |
+| 1 | JSON-RPC + auth model | `services/rpc/Server.go`, grep `RegisterRPC`, `BasicAuth`, `rpc_user`/`rpc_pass` |
+| 2 | REST / Asset HTTP API | `services/asset/httpimpl/`, grep `apiGroup.GET`, `/api/v1/` |
+| 3 | Notifications (WS / SSE / gRPC / Kafka) | `services/asset/centrifuge_impl/`, `services/p2p/HandleWebsocket.go`, grep `centrifuge`, `gorilla/websocket`, `kafka` |
+| 4 | P2P listener | `services/legacy/`, `services/p2p/`, `chaincfg/`, grep `DefaultPort`, `libp2p` |
+| 5 | Metrics + Health | `services/*/metrics.go`, `daemon/daemon_services.go`, grep `prometheus`, `/health`, `health.CheckAll` |
+| 6 | Extended transaction format | `docs/misc/BIP-239.md`, `go-bt/v2`, grep `ExtendedBytes`, `IsExtended`, `0xEF` |
+| 7 | Mempool + testmempoolaccept + fee estimation | `services/rpc/Server.go` (rpcHandlersBeforeInit), `services/validator/`, grep `testmempoolaccept`, `EstimateFee`, `getrawmempool` |
+| 8 | Double-spend detection / notification | `services/validator/`, `stores/utxo/process_conflicting.go`, grep `doublespend`, `ErrSpent`, `KAFKA_REJECTEDTX` |
+| 9 | Settings / configuration | `settings.conf`, `settings_local.conf`, `settings/settings.go`, grep port constants, `gocore.Config` |
 
 ## Synthesis rules
 
