@@ -85,12 +85,14 @@ type Durations struct {
 
 // Limits caps load-generating tests.
 type Limits struct {
-	PERF1MaxTPS         int      `yaml:"perf1_max_tps"`
-	INTER2TxCount       int      `yaml:"inter2_tx_count"`
-	CLIENT3TxCount      int      `yaml:"client3_tx_count"`
-	FR7ChainDepth       int      `yaml:"fr7_chain_depth"`
-	FR10LatencyTargetMs int      `yaml:"fr10_latency_target_ms"`
-	FR8PriorityLevels   []string `yaml:"fr8_priority_levels"`
+	PERF1MaxTPS         int           `yaml:"perf1_max_tps"`
+	INTER2TxCount       int           `yaml:"inter2_tx_count"`
+	CLIENT3TxCount      int           `yaml:"client3_tx_count"`
+	FR7ChainDepth       int           `yaml:"fr7_chain_depth"`
+	FR10LatencyTargetMs int           `yaml:"fr10_latency_target_ms"`
+	FR8PriorityLevels   []string      `yaml:"fr8_priority_levels"`
+	NFR13MaxProbeRate   int           `yaml:"nfr13_max_probe_rate"`
+	NFR13ProbeDuration  time.Duration `yaml:"nfr13_probe_duration"`
 }
 
 // loadYAMLFile parses a YAML file into a Config without applying defaults
@@ -257,5 +259,11 @@ func mergeYAML(dst *Config, src Config) {
 	}
 	if len(src.Limits.FR8PriorityLevels) > 0 {
 		dst.Limits.FR8PriorityLevels = src.Limits.FR8PriorityLevels
+	}
+	if src.Limits.NFR13MaxProbeRate != 0 {
+		dst.Limits.NFR13MaxProbeRate = src.Limits.NFR13MaxProbeRate
+	}
+	if src.Limits.NFR13ProbeDuration != 0 {
+		dst.Limits.NFR13ProbeDuration = src.Limits.NFR13ProbeDuration
 	}
 }

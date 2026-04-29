@@ -34,7 +34,9 @@ func validBase() Config {
 		Limits: Limits{
 			PERF1MaxTPS: 1, INTER2TxCount: 1, CLIENT3TxCount: 1,
 			FR7ChainDepth: 1, FR10LatencyTargetMs: 1,
-			FR8PriorityLevels: []string{"standard"},
+			FR8PriorityLevels:  []string{"standard"},
+			NFR13MaxProbeRate:  100,
+			NFR13ProbeDuration: time.Second,
 		},
 		ReportJSON: "report.json", ReportHTML: "report.html",
 		TestTimeout: time.Minute,
@@ -201,6 +203,31 @@ func TestValidate_validWIFAccepted(t *testing.T) {
 	c.Funding.WIF = "L1aW4aubDFB7yfras2S1mN3bqg9nwySY8nkoLmJebSLD5BWv3ENZ"
 	if err := Validate(&c); err != nil {
 		t.Errorf("valid WIF rejected: %v", err)
+	}
+}
+
+func TestValidate_NFR13Defaults(t *testing.T) {
+	c := validBase()
+	if err := Validate(&c); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+}
+
+func TestValidate_NFR13NegativeProbeRate(t *testing.T) {
+	c := validBase()
+	c.Limits.NFR13MaxProbeRate = -1
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "nfr13_max_probe_rate") {
+		t.Errorf("want NFR13MaxProbeRate error, got %v", err)
+	}
+}
+
+func TestValidate_NFR13NegativeProbeDuration(t *testing.T) {
+	c := validBase()
+	c.Limits.NFR13ProbeDuration = -1
+	err := Validate(&c)
+	if err == nil || !strings.Contains(err.Error(), "nfr13_probe_duration") {
+		t.Errorf("want NFR13ProbeDuration error, got %v", err)
 	}
 }
 

@@ -141,6 +141,12 @@ func Validate(c *Config) error {
 	if len(c.Limits.FR8PriorityLevels) == 0 {
 		errs = append(errs, "limits.fr8_priority_levels must list at least one level")
 	}
+	if c.Limits.NFR13MaxProbeRate < 0 {
+		errs = append(errs, "limits.nfr13_max_probe_rate must be ≥ 0")
+	}
+	if c.Limits.NFR13ProbeDuration < 0 {
+		errs = append(errs, "limits.nfr13_probe_duration must be ≥ 0")
+	}
 
 	if len(errs) > 0 {
 		return fmt.Errorf("config invalid:\n  - %s", strings.Join(errs, "\n  - "))

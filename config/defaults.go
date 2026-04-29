@@ -45,6 +45,12 @@ func applyDefaults(c *Config) {
 	if len(c.Limits.FR8PriorityLevels) == 0 {
 		c.Limits.FR8PriorityLevels = []string{"economy", "standard", "priority"}
 	}
+	if c.Limits.NFR13MaxProbeRate == 0 {
+		c.Limits.NFR13MaxProbeRate = 1000
+	}
+	if c.Limits.NFR13ProbeDuration == 0 {
+		c.Limits.NFR13ProbeDuration = 5 * time.Second
+	}
 	if c.ReportJSON == "" {
 		c.ReportJSON = "report.json"
 	}
