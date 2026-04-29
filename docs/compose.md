@@ -34,8 +34,8 @@ make compose-down        # tears down (removes containers and volumes)
 | teranode-3 (same suite) | 39292/38090/39091/38000/38444/39905 | | |
 | svnode-1 RPC | 18332 | 18332 | bitcoind RPC (wallet) |
 | svnode-1 P2P | 14444 | 18444 | BSV-wire P2P |
-| svnode-1 ZMQ block | 28332 | 28332 | ZMQ hashblock |
-| svnode-1 ZMQ tx | 28333 | 28333 | ZMQ rawtx |
+| svnode-1 ZMQ block | 18331 | 28332 | ZMQ hashblock |
+| svnode-1 ZMQ tx | 18330 | 28333 | ZMQ rawtx |
 | svnode-2 RPC / P2P | 28332 / 24444 | 18332 / 18444 | (no wallet) |
 | svnode-3 RPC / P2P | 38332 / 34444 | 18332 / 18444 | (no wallet) |
 | aerospike | 13000 | 3000 | client port |

@@ -17,8 +17,8 @@ svnode:
   rpc_url: "http://localhost:18332"
   rpc_user: "bitcoin"
   rpc_pass: "bitcoin"
-  zmq_block_url: "tcp://localhost:28332"
-  zmq_tx_url: "tcp://localhost:28333"
+  zmq_block_url: "tcp://localhost:18331"
+  zmq_tx_url: "tcp://localhost:18330"
 
 funding:
   # Public test vector WIF (privkey=1, mainnet form). Bootstrap derives

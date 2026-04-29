@@ -36,7 +36,7 @@ wait_for() {
 }
 
 wait_for "svnode-1" 18332 "getblockchaininfo"
-wait_for "teranode-1 RPC" 19292 "version" 120
+wait_for "teranode-1 RPC" 19292 "getblockchaininfo" 120
 
 echo "==> generating mining address (svnode-1 wallet)"
 ADDR=$(rpc_call 18332 "getnewaddress" '[]' | jq -r '.result')
@@ -71,7 +71,11 @@ if [ ! -x bin/derive-address ]; then
     echo "FAIL: bin/derive-address not built. Run 'make build' first."
     exit 1
 fi
-WIF=$(grep -E '^\s+wif:' config.docker.yaml | head -1 | awk -F\" '{print $2}')
+WIF=$(awk '/^[[:space:]]*wif:/ {
+    gsub(/^[[:space:]]*wif:[[:space:]]*"?|"?[[:space:]]*$/, "")
+    print
+    exit
+}' config.docker.yaml)
 [ -n "$WIF" ] || { echo "FAIL: WIF not found in config.docker.yaml"; exit 1; }
 TEST_ADDR=$(./bin/derive-address "$WIF")
 [ -n "$TEST_ADDR" ] || { echo "FAIL: derive-address produced empty result"; exit 1; }

@@ -14,7 +14,7 @@ services:
     image: confluentinc/cp-kafka:7.5.0
     depends_on: [zookeeper]
     ports:
-      - "127.0.0.1:19092:9092"
+      - "127.0.0.1:19092:19092"   # EXTERNAL listener (was 9092, mapped wrong listener)
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
@@ -62,7 +62,6 @@ services:
     environment:
       SETTINGS_CONTEXT: docker.tng
       SETTINGS_APPLICATION: teranode1
-      PORT_PREFIX: ""
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
     networks: [tng-net]
@@ -106,10 +105,10 @@ services:
   svnode-1:
     image: bitcoinsv/bitcoin-sv:1.1.0
     ports:
-      - "127.0.0.1:18332:18332"
-      - "127.0.0.1:14444:18444"
-      - "127.0.0.1:28332:28332"
-      - "127.0.0.1:28333:28333"
+      - "127.0.0.1:18332:18332"   # RPC
+      - "127.0.0.1:14444:18444"   # legacy P2P
+      - "127.0.0.1:18331:28332"   # ZMQ block (was 28332, collided with svnode-2 RPC)
+      - "127.0.0.1:18330:28333"   # ZMQ tx (was 28333, out of suite)
     volumes:
       - ./svnode/bitcoin.conf:/data/bitcoin.conf:ro
       - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf.local:ro
