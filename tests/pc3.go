@@ -99,7 +99,7 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	// Shape 1 — P2PKH.
 	bres, err := builder.BuildP2PKH(txgen.BuildRequest{
 		Outputs: []txgen.Output{{Script: addrScript, Satoshis: 1_000}},
-		FeeRate:  500,
+		FeeRate: 500,
 	})
 	if err != nil {
 		return errorResult(res, fmt.Errorf("build P2PKH: %w", err))

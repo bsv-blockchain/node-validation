@@ -154,3 +154,5 @@ func classifyRateLimit(err error) (int, bool) {
 var _ matrix.Severity = matrix.SeverityCritical
 var _ *svnode.RPCClient
 var _ *teranode.RPCClient
+var _ = probeTLS
+var _ tlsInfo
