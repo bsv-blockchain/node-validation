@@ -47,14 +47,15 @@ type Config struct {
 
 // Teranode endpoints under test.
 type Teranode struct {
-	RPCURL          string `yaml:"rpc_url"`
-	RPCUser         string `yaml:"rpc_user"`
-	RPCPass         string `yaml:"rpc_pass"`
-	RESTURL         string `yaml:"rest_url"`
-	NotificationURL string `yaml:"notification_url"`
-	P2PAddress      string `yaml:"p2p_address"`
-	MetricsURL      string `yaml:"metrics_url"`
-	HealthURL       string `yaml:"health_url"`
+	RPCURL           string `yaml:"rpc_url"`
+	RPCUser          string `yaml:"rpc_user"`
+	RPCPass          string `yaml:"rpc_pass"`
+	RESTURL          string `yaml:"rest_url"`
+	NotificationURL  string `yaml:"notification_url"`
+	P2PLegacyAddress string `yaml:"p2p_legacy_address"` // Bitcoin wire P2P (8333 mainnet, 18333 testnet)
+	P2PAddress       string `yaml:"p2p_address"`        // libp2p TCP listener (9905)
+	MetricsURL       string `yaml:"metrics_url"`
+	HealthURL        string `yaml:"health_url"`
 }
 
 // SVNode reference endpoints.
@@ -187,6 +188,9 @@ func mergeYAML(dst *Config, src Config) {
 	}
 	if src.Teranode.NotificationURL != "" {
 		dst.Teranode.NotificationURL = src.Teranode.NotificationURL
+	}
+	if src.Teranode.P2PLegacyAddress != "" {
+		dst.Teranode.P2PLegacyAddress = src.Teranode.P2PLegacyAddress
 	}
 	if src.Teranode.P2PAddress != "" {
 		dst.Teranode.P2PAddress = src.Teranode.P2PAddress

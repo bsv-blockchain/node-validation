@@ -42,8 +42,8 @@ func NewClients(cfg config.Teranode, logger *slog.Logger) (*Clients, error) {
 		return nil, fmt.Errorf("teranode health: %w", err)
 	}
 	var p2p *P2PProbe
-	if cfg.P2PAddress != "" {
-		p2p = NewP2PProbe(cfg.P2PAddress, cfg.P2PAddress /* libp2p — caller may override */, logger)
+	if cfg.P2PLegacyAddress != "" || cfg.P2PAddress != "" {
+		p2p = NewP2PProbe(cfg.P2PLegacyAddress, cfg.P2PAddress, logger)
 	}
 	return &Clients{
 		RPC:           rpc,

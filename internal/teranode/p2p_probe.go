@@ -3,6 +3,7 @@ package teranode
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
 	"encoding/binary"
 	"errors"
 	"fmt"
@@ -27,6 +28,12 @@ func NewP2PProbe(legacyAddr, libp2pAddr string, logger *slog.Logger) *P2PProbe {
 	}
 	return &P2PProbe{legacyAddr: legacyAddr, libp2pAddr: libp2pAddr, logger: logger}
 }
+
+// LegacyAddr returns the configured Bitcoin wire P2P address.
+func (p *P2PProbe) LegacyAddr() string { return p.legacyAddr }
+
+// Libp2pAddr returns the configured libp2p TCP address.
+func (p *P2PProbe) Libp2pAddr() string { return p.libp2pAddr }
 
 // PeerInfo is the subset of the Bitcoin version message we surface.
 type PeerInfo struct {
@@ -197,11 +204,6 @@ func parseVersionPayload(p []byte) (PeerInfo, error) {
 
 // doubleSHA256 returns the Bitcoin double-SHA256 of b.
 func doubleSHA256(b []byte) [32]byte {
-	first := sha256Sum(b)
-	return sha256Sum(first[:])
-}
-
-// sha256Sum is a tiny wrapper to keep the import block minimal in tests.
-func sha256Sum(b []byte) [32]byte {
-	return shaSum(b)
+	first := sha256.Sum256(b)
+	return sha256.Sum256(first[:])
 }

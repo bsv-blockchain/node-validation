@@ -12,7 +12,8 @@ teranode:
   # rpc_pass: "<set via TNG_TERANODE_RPC_PASS>"
   rest_url: "http://teranode.example:8090"
   notification_url: "ws://teranode.example:8090/notifications"
-  p2p_address: "teranode.example:9905"
+  # p2p_legacy_address: "teranode.example:18333"  # Bitcoin wire P2P (8333 mainnet, 18333 testnet)
+  p2p_address: "teranode.example:9905"             # libp2p TCP probe
   metrics_url: "http://teranode.example:9000/metrics"
   health_url: "http://teranode.example:9000/health"
 

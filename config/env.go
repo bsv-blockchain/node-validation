@@ -35,6 +35,9 @@ func applyEnv(cfg *Config, environ []string) error {
 	if v, ok := get("TNG_TERANODE_NOTIFICATION_URL"); ok {
 		cfg.Teranode.NotificationURL = v
 	}
+	if v, ok := get("TNG_TERANODE_P2P_LEGACY_ADDRESS"); ok {
+		cfg.Teranode.P2PLegacyAddress = v
+	}
 	if v, ok := get("TNG_TERANODE_P2P_ADDRESS"); ok {
 		cfg.Teranode.P2PAddress = v
 	}
