@@ -10,7 +10,7 @@ methodology from scratch.
 - Commit:     `11f5fa6a81c36490e2796561f76a39294fc422b5`
 - Branch:     `test/longest-chain-double-spend`
 - Captured:   `2026-04-29T16:00:00Z`
-- Captured by: discovery sub-agent fan-out
+- Captured by: discovery sub-agent fan-out (9 parallel Explore agents)
 
 ## Agent fan-out
 
