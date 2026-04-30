@@ -356,10 +356,21 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 		return res
 	}
 
-	// 4. invalidateblock(B1) on teranode-1.
+	// 4. invalidateblock(B1) on teranode-1, with one retry after 2s
+	// per SP9 spec §7 risk B (transient busy/mining races).
 	var dummy json.RawMessage
-	if err := env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy); err != nil {
-		res.Err = fmt.Errorf("invalidateblock B1 on teranode-1: %w", err)
+	invalErr := env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy)
+	if invalErr != nil {
+		select {
+		case <-ctx.Done():
+			res.Err = ctx.Err()
+			return res
+		case <-time.After(2 * time.Second):
+		}
+		invalErr = env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy)
+	}
+	if invalErr != nil {
+		res.Err = fmt.Errorf("invalidateblock B1 on teranode-1 (after retry): %w", invalErr)
 		return res
 	}
 
