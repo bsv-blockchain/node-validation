@@ -22,7 +22,9 @@ package tests
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"os"
 
 	"github.com/bsv-blockchain/node-validation/internal/compare"
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
@@ -49,6 +51,9 @@ func RunPC2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 	fixtures, err := LoadFixtures(fixturePathPC2)
 	if err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return skipMissing(res, "fixture file not found: "+fixturePathPC2)
+		}
 		return errorResult(res, err)
 	}
 	res.Observations["fixture_count"] = len(fixtures)
