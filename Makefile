@@ -41,6 +41,7 @@ verify: gen
 	@./bin/gen-fixtures --out tests/testdata/
 	@git diff --exit-code tests/testdata/historical_scripts.yaml tests/testdata/historical_utxos.yaml \
 	  || (echo "fixture YAML out of sync — run 'make gen-fixtures' and commit" && exit 1)
+	@go run ./scripts/check-test-docs.go --tests-dir tests/
 
 clean:
 	rm -rf bin/ report.json report.html coverage.out coverage.html
