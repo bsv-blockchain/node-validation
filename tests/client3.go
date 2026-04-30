@@ -71,18 +71,16 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 	var mu sync.Mutex
 	blockHeights := []uint64{}
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case e := <-notif.Blocks():
-				mu.Lock()
-				blockHeights = append(blockHeights, e.Height)
-				mu.Unlock()
-			}
+
+	origCtx, origCancel := context.WithCancel(ctx)
+	defer origCancel()
+	var freshCancel context.CancelFunc
+	defer func() {
+		if freshCancel != nil {
+			freshCancel()
 		}
 	}()
+	go tailBlockHeights(origCtx, notif, &mu, &blockHeights)
 
 	// Bootstrap funder and build splitter to produce `count` UTXOs.
 	funder := env.TxGen
@@ -126,8 +124,31 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	funder.ConfirmMulti(splitter.Inputs, newUTXOs)
 
 	// Submit all `count` transactions to Teranode.
+	// At the midpoint (i == half), perform a controlled reconnect so that the
+	// block-ordering check covers both pre- and post-reconnect blocks.
 	sentTxIDs := make([]string, 0, count)
+	half := count / 2
+	var freshErr error
+	reconnected := false
 	for i := 0; i < count; i++ {
+		if i == half {
+			// Midpoint reconnect: close original client, construct a fresh one.
+			_ = notif.Close()
+			origCancel() // signal the original tail goroutine to exit
+			time.Sleep(2 * time.Second)
+			var freshNotif *teranode.NotificationClient
+			freshNotif, freshErr = teranode.NewNotificationClient(env.Cfg.Teranode.NotificationURL, env.Logger)
+			if freshErr == nil && freshNotif != nil {
+				if connErr := freshNotif.Connect(ctx); connErr == nil {
+					env.Teranode.Notifications = freshNotif
+					notif = freshNotif
+					freshCtx, freshCancelInner := context.WithCancel(ctx)
+					freshCancel = freshCancelInner
+					go tailBlockHeights(freshCtx, freshNotif, &mu, &blockHeights)
+					reconnected = true
+				}
+			}
+		}
 		bres, err := builder.BuildP2PKH(txgen.BuildRequest{
 			Outputs:   []txgen.Output{{Script: addrScript, Satoshis: 1_000}},
 			FeeRate:   500,
@@ -142,31 +163,6 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		}
 	}
 	res.Observations["txs_submitted"] = len(sentTxIDs)
-
-	// Mid-stream reconnection: close existing client, construct fresh NotificationClient.
-	_ = notif.Close()
-	time.Sleep(2 * time.Second)
-	freshNotif, freshErr := teranode.NewNotificationClient(env.Cfg.Teranode.NotificationURL, env.Logger)
-	reconnected := false
-	if freshErr == nil && freshNotif != nil {
-		if connErr := freshNotif.Connect(ctx); connErr == nil {
-			env.Teranode.Notifications = freshNotif
-			reconnected = true
-			// Resume block-height tracking on the fresh client.
-			go func() {
-				for {
-					select {
-					case <-ctx.Done():
-						return
-					case e := <-freshNotif.Blocks():
-						mu.Lock()
-						blockHeights = append(blockHeights, e.Height)
-						mu.Unlock()
-					}
-				}
-			}()
-		}
-	}
 
 	if reconnected {
 		res.AcceptanceChecks = append(res.AcceptanceChecks, ok(

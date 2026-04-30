@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
@@ -242,4 +243,37 @@ func classifyRateLimit(err error) (int, bool) {
 // without importing encoding/json directly in the caller file.
 func jsonUnmarshalLooseImpl(b []byte, v any) error {
 	return json.Unmarshal(b, v)
+}
+
+// tailBlocks ranges over notif.Blocks() until ctx is cancelled.
+// Used by CLIENT-1 so each notification goroutine has its own cancellable
+// context; calling cancel() on that context stops the goroutine promptly
+// when the client is disconnected and replaced by a fresh one.
+func tailBlocks(ctx context.Context, notif *teranode.NotificationClient, mu *sync.Mutex, seen map[string]bool, count *int) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case e := <-notif.Blocks():
+			mu.Lock()
+			seen[e.Hash] = true
+			*count++
+			mu.Unlock()
+		}
+	}
+}
+
+// tailBlockHeights ranges over notif.Blocks() and appends block heights until
+// ctx is cancelled. Used by CLIENT-3 for the same per-goroutine cancel pattern.
+func tailBlockHeights(ctx context.Context, notif *teranode.NotificationClient, mu *sync.Mutex, heights *[]uint64) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case e := <-notif.Blocks():
+			mu.Lock()
+			*heights = append(*heights, e.Height)
+			mu.Unlock()
+		}
+	}
 }

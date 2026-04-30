@@ -86,19 +86,15 @@ func RunCLIENT1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	seenViaSub := map[string]bool{} // block hashes seen via subscription
 	subCount := 0
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case e := <-notif.Blocks():
-				mu.Lock()
-				seenViaSub[e.Hash] = true
-				subCount++
-				mu.Unlock()
-			}
+	origCtx, origCancel := context.WithCancel(ctx)
+	defer origCancel()
+	var freshCancel context.CancelFunc
+	defer func() {
+		if freshCancel != nil {
+			freshCancel()
 		}
 	}()
+	go tailBlocks(origCtx, notif, &mu, seenViaSub, &subCount)
 
 	// Bursty mining: 1 block every 30s (-short → ~10 blocks in 5min).
 	miningTicker := time.NewTicker(30 * time.Second)
@@ -173,31 +169,21 @@ func RunCLIENT1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 			// Mid-window disconnect simulation: ~halfway through.
 			if !disconnected && time.Now().After(deadline.Add(-obs/2)) {
+				disconnected = true
 				_ = notif.Close()
-				time.Sleep(60 * time.Second)
+				origCancel()                 // signal the original tail goroutine to exit
+				time.Sleep(10 * time.Second) // shortened from 60s — still meaningfully simulates disconnect
 				// Re-construct fresh client.
 				freshNotif, err := teranode.NewNotificationClient(env.Cfg.Teranode.NotificationURL, env.Logger)
 				if err == nil && freshNotif != nil {
 					if err := freshNotif.Connect(ctx); err == nil {
 						env.Teranode.Notifications = freshNotif
 						notif = freshNotif
-						// Resume the goroutine on the new client.
-						go func() {
-							for {
-								select {
-								case <-ctx.Done():
-									return
-								case e := <-freshNotif.Blocks():
-									mu.Lock()
-									seenViaSub[e.Hash] = true
-									subCount++
-									mu.Unlock()
-								}
-							}
-						}()
+						freshCtx, freshCancelInner := context.WithCancel(ctx)
+						freshCancel = freshCancelInner
+						go tailBlocks(freshCtx, freshNotif, &mu, seenViaSub, &subCount)
 					}
 				}
-				disconnected = true
 			}
 		}
 	}
