@@ -1,0 +1,315 @@
+# Verdict Interpretation Guide
+
+Per-test, per-status reference. Use this when a test's status surprises you.
+
+Each subsection covers one test ID. Statuses listed are those that can plausibly appear in `report.json` under `test_cases[].result.status`.
+
+---
+
+## Critical tests
+
+### PC-1 — Parallel Node Comparison
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Both nodes agreed throughout observation; reorg induction succeeded and both nodes converged on the longer chain | None |
+| FAIL ("Zero divergence…") | At least one observation sample showed Teranode vs SV Node disagreement on best-block hash or height | Investigate which node diverged; check chain integrity on both; check peering mesh |
+| FAIL ("reorged=false") | Reorg induction failed — `invalidateblock` or `generatetoaddress` returned an error, or convergence timeout elapsed before both nodes agreed | Check teranode-1 wallet support; verify connectivity between teranode-1 and svnode-1; check mine-to-address config |
+| FAIL ("convergence timeout") | Both nodes were live and reorg was triggered, but they did not agree on the same tip within the observation window | Increase `test_timeout` or check network latency between container nodes |
+| ERROR ("bootstrap…") | The funder could not bootstrap the wallet | SV Node wallet likely disabled; check `disablewallet=0` on svnode-1 |
+| SKIPPED ("client(s) not configured") | Required clients (Teranode RPC, SV Node RPC, TxGen) were not all resolvable in config | Populate all required fields in `config.docker.yaml` |
+
+---
+
+### PC-2 — Historical Script Regression
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Teranode returned the same script-execution result as SV Node for all 30 fixture transactions | None |
+| FAIL ("fixture mismatch: tx …") | For at least one fixture tx, Teranode's validation decision differed from SV Node's | Identify the fixture ID from the Detail field; inspect the script; check if Teranode's consensus-rule version differs from the fixture generation context |
+| FAIL ("could not load fixtures") | The fixture file `tests/testdata/*.json` was absent or malformed | Run `make gen` to regenerate fixtures; verify fixture generation did not error |
+| ERROR | Harness error while calling Teranode or SV Node during replay | Check node health; re-run with `--only PC-2` to isolate |
+| SKIPPED ("client(s) not configured") | Teranode RPC or SV Node RPC not configured | Set both endpoints in config |
+
+---
+
+### PC-3 — Transaction Round-trip
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | All three transaction types (P2PKH, P2MS, OP_RETURN) submitted and confirmed; block parsed successfully | None |
+| FAIL ("broadcast failed: …") | Teranode rejected at least one submitted transaction | Check Teranode RPC logs; verify transaction format and fee rate |
+| FAIL ("block parse: …") | Submitted transaction was confirmed but the block could not be parsed by the standard parser | Likely a serialisation mismatch; inspect raw block hex |
+| FAIL ("tx not found in block") | Transaction was accepted but not mined within the observation window | Increase timeout; check mempool configuration |
+| ERROR | Harness panicked or failed during client call | Check compose stack health |
+| SKIPPED ("client(s) not configured") | Teranode RPC or TxGen wallet not configured | Set endpoints in config |
+
+---
+
+### IBD-2 — Historical UTXO Spend Parity
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Teranode and SV Node returned identical UTXO-spend decisions for all 10 fixture transactions | None |
+| FAIL ("fixture mismatch: tx …") | At least one fixture showed divergent spend-validation result between nodes | Identify the fixture from Detail; inspect UTXO state on both nodes at fixture height |
+| FAIL ("could not load fixtures") | IBD-2 fixture file absent or malformed | Run `make gen`; check fixture generation logs |
+| ERROR | Network or RPC failure during replay | Check node health |
+| SKIPPED ("client(s) not configured") | Teranode RPC or SV Node RPC not configured | Set both endpoints |
+
+---
+
+### INTER-1 — Mixed-Network Observation + Reorg Convergence
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Mixed-network mesh (Teranode + SV Node peers) maintained tip agreement; reorg induction converged successfully | None |
+| FAIL ("mesh diverged: …") | At least one observation window showed the mixed-network mesh split on best tip | Check P2P peering config; verify `addnode` entries in all bitcoin.conf overlays |
+| FAIL ("reorg convergence timeout") | Reorg was triggered but not all nodes converged within the observation window | Increase `test_timeout`; check peer connectivity in compose logs |
+| FAIL ("reorg induced=false") | `invalidateblock` call failed or returned an error | Check if teranode-1 has wallet/mining support |
+| ERROR | Harness failure | Check compose stack; re-run isolated |
+| SKIPPED ("client(s) not configured") | Teranode or SV Node clients missing from config | Set both sets of endpoints |
+
+---
+
+### INTER-2 — 1000-Tx Cross-Network Propagation
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | ≥99% of 1000 transactions propagated in each direction (Teranode→SV, SV→Teranode) within 10 seconds | None |
+| FAIL ("propagation Teranode→SV: …%") | Too few transactions propagated from Teranode to SV Node in time | Check legacy-mesh peering; inspect `addnode` entries; check mempool acceptance on SV Node |
+| FAIL ("propagation SV→Teranode: …%") | Too few transactions propagated from SV Node to Teranode in time | Same as above in reverse direction |
+| FAIL ("broadcast errors: …") | Submission of the 1000 transactions produced errors | Check fee rate; check Teranode RPC rate limits |
+| ERROR | Harness failure during tx generation or submission | Check TxGen wallet funding; check compose stack |
+| SKIPPED ("client(s) not configured") | TxGen, Teranode RPC, or SV Node RPC not configured | Set all three |
+
+---
+
+### CLIENT-1 — Notification Session + Reconnect
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Connected to Centrifuge WebSocket, received new-block notifications, submitted broadcast, received notification mid-window reconnect | None |
+| FAIL ("no notification received after broadcast") | Broadcast was accepted but no Centrifuge notification arrived in time | Check Centrifuge subscription topic; verify `:8090/connection/websocket` endpoint is accessible from test host |
+| FAIL ("reconnect notification absent") | Mid-window reconnect did not yield resumed notifications | Check Centrifuge token refresh and subscription state |
+| FAIL ("broadcast rejected") | Teranode rejected the test transaction | Check transaction format and fee |
+| ERROR | WebSocket dial or auth failure | Verify `centrifuge_url` config points to `:8090/connection/websocket` (not `:8892`) per SP2 discovery |
+| SKIPPED ("client(s) not configured") | Centrifuge URL or Teranode RPC not configured | Set both in config |
+
+---
+
+### CLIENT-3 — 500-Tx Ordered Broadcast
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | All 500 transactions broadcast; confirmed in blocks in correct height order | None |
+| FAIL ("ordering violation: tx … in block … before block …") | A transaction appeared in a block before a transaction that should have been mined first | Check submission sequencing logic; check Teranode mempool ordering behaviour |
+| FAIL ("< 500 confirmed") | Not all 500 transactions were confirmed within the observation window | Increase timeout; check mempool depth |
+| FAIL ("broadcast errors") | At least one transaction was rejected by Teranode | Check fee, script, and format |
+| ERROR | Harness or TxGen wallet failure | Check wallet funding |
+| SKIPPED ("client(s) not configured") | Teranode RPC or TxGen not configured | Set both |
+
+---
+
+## Important tests
+
+### PERF-1 — Throughput and Latency Baseline
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | All configured TPS ramp steps (default [10, 50, 100, 250]) completed; p50 and p95 latency recorded | None |
+| FAIL ("p95 latency at 100 TPS: …ms > threshold") | At least one ramp step exceeded the p95 latency threshold | Lower `perf1_max_tps` in config.docker.yaml; this is a local docker constraint, not necessarily a Teranode defect |
+| FAIL ("error rate > 1% at … TPS") | Too many broadcast errors at the given TPS | Reduce `perf1_max_tps`; check Teranode RPC rate limits |
+| FAIL ("ramp step … failed to complete") | A ramp step produced no successful transactions | Check TxGen wallet funding; check Teranode health |
+| ERROR | Harness or wallet failure during ramp | Check compose stack logs |
+| SKIPPED ("client(s) not configured") | Teranode RPC or TxGen not configured | Set both |
+
+---
+
+### OPS-3 — Metrics and Health Endpoints
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | All 5 required metric categories present on `/metrics`; `/health` returned 200 with valid JSON | None |
+| FAIL ("metric … absent") | A required metric category was not found in the Prometheus scrape output | Likely Teranode version drift since SP2 discovery; check metric names in current `/metrics` output and update `tests/ops3.go` |
+| FAIL ("health endpoint: status … ≠ 200") | Teranode `/health` returned non-200 | Teranode may be unhealthy; check compose logs |
+| FAIL ("health response: missing field …") | Health response JSON lacked expected field | Teranode API changed; update health check logic |
+| ERROR | Network failure reaching metrics or health endpoints | Check port exposure in compose; verify host-port mappings |
+| SKIPPED ("client(s) not configured") | Metrics URL or health URL not configured | Set `metrics_url` and `health_url` in config |
+
+---
+
+### CLIENT-2 — Extended Transaction Format
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Extended-format transaction accepted; standard-format backward compatibility confirmed | None |
+| FAIL ("extended format rejected") | Teranode returned an error for the extended-format transaction | Teranode may not yet support extended format in this version; check discovery docs |
+| FAIL ("backward compat: standard tx rejected") | Standard-format transaction was rejected when extended-format was active | Regression in Teranode; report to BSVA |
+| ERROR | Harness or RPC failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Teranode RPC not configured | Set in config |
+| SKIPPED ("feature not available per discovery") | SP2 discovery marked extended tx format as not available in this build | Acceptable; no action unless feature is expected |
+
+---
+
+## Advisory tests
+
+### NEW-FR7 — Unconfirmed Chain Depth
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | A 25-deep unconfirmed transaction chain was accepted into Teranode's mempool without errors | None |
+| FAIL ("chain rejected at depth …") | Teranode rejected the chain before reaching depth 25 | Check Teranode's `limitancestorcount` setting; this may be a configuration limit, not a bug |
+| FAIL ("chain not found in mempool at depth …") | Chain was submitted but not all members were present in the mempool query | Check mempool query endpoint; may be related to NEW-FR11 availability gaps |
+| ERROR | Harness or TxGen failure while building chain | Check wallet funding; check TxGen chain-builder logic |
+| SKIPPED ("client(s) not configured") | Teranode RPC or TxGen not configured | Set both |
+
+---
+
+### NEW-FR8 — Fee Estimation Endpoint
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Fee estimation endpoint responded with a valid fee rate | None |
+| FEATURE_NOT_AVAILABLE | SP2 discovery found no fee estimation endpoint in this Teranode build | Expected per discovery; Advisory severity means no verdict demotion |
+| FAIL ("unexpected error …") | Endpoint exists but returned an error outside of "not available" | Investigate endpoint; report to BSVA |
+| ERROR | Harness failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Teranode RPC not configured | Set in config |
+
+---
+
+### NEW-FR9 — Double-Spend Detection
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Double-spend transaction was rejected; `/p2p-ws` notification was received for the original transaction | None |
+| FAIL ("double-spend not detected") | Teranode accepted both the original and the double-spend transaction | Investigate Teranode mempool conflict handling |
+| FAIL ("no p2p-ws notification") | Double-spend was detected but no notification arrived on the `/p2p-ws` channel | Check port 9906/19906/29906 exposure in compose; check `/p2p-ws` subscription |
+| ERROR | WebSocket dial failure or harness error | Verify host-port mappings for p2p-ws |
+| SKIPPED ("client(s) not configured") | P2P-WS URL or TxGen not configured | Set both in config |
+
+---
+
+### NEW-FR10 — Historical Data Access Latency
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Historical data queries returned p95 latency ≤ 100ms | None |
+| FAIL ("p95 latency: …ms > 100ms") | Historical data queries exceeded the 100ms p95 threshold | This may be a docker resource constraint; re-run on adequate hardware or increase threshold in config |
+| FAIL ("query error: …") | Historical data endpoint returned an error | Check Teranode historical API availability |
+| ERROR | Harness failure or network error | Check compose stack |
+| SKIPPED ("client(s) not configured") | Historical data endpoint not configured | Set in config |
+
+---
+
+### NEW-FR11 — Mempool Query
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Mempool query returned expected results | None |
+| FEATURE_NOT_AVAILABLE | SP2 discovery found most mempool query endpoints absent in this Teranode build | Expected per discovery; Advisory severity means no verdict demotion |
+| FAIL ("unexpected query error") | Endpoint exists but returned an unexpected error | Investigate endpoint; report to BSVA |
+| FAIL ("result mismatch") | Query result did not match expected mempool state | Check mempool population prior to query |
+| ERROR | Harness failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Teranode RPC not configured | Set in config |
+
+---
+
+### NEW-NFR7 — Idle Determinism
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | 3 read operations × 100 iterations all returned identical results; no non-determinism detected | None |
+| FAIL ("non-determinism on op … iteration …") | A read operation returned a different result across iterations | Investigate which read op diverged; could indicate state mutation during reads or timing race |
+| FAIL ("operation error on iteration …") | A read operation returned an error partway through the 100 iterations | Check Teranode stability; may be a transient error — re-run to confirm |
+| ERROR | Harness failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Teranode RPC not configured | Set in config |
+
+---
+
+### NEW-NFR11 — TLS and Auth Probe
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | All endpoints responded correctly; TLS findings recorded | The finding (plain HTTP usage) is recorded in Detail regardless of PASS; no action unless BSVA mandates TLS |
+| FAIL ("auth bypass: …") | An authenticated endpoint accepted requests without valid credentials | Security issue; report to BSVA immediately |
+| FAIL ("unexpected TLS error") | An endpoint that should support TLS rejected the TLS handshake | Check Teranode TLS configuration |
+| ERROR | Harness failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Required endpoint URLs not configured | Set in config |
+
+---
+
+### NEW-NFR13 — Rate-Limit Discovery
+
+| Status | Means | Action |
+|---|---|---|
+| PASS | Rate-limit probe completed; findings recorded in Detail | Findings may indicate no rate limiting is enforced — record that as a finding for BSVA, not a failure |
+| FAIL ("rate limit too aggressive: …") | Teranode started rejecting requests at a rate below the configured acceptable floor | Adjust `rate_limit_floor` in config; or report to BSVA if the limit is unexpectedly low |
+| FAIL ("probe error at rate …") | The probe itself errored during the rate ramp | Check Teranode health and compose logs |
+| ERROR | Harness failure | Check compose stack |
+| SKIPPED ("client(s) not configured") | Teranode RPC or metrics URL not configured | Set in config |
+
+---
+
+## Documentation and contractual rows (reviewer overrides required)
+
+These five rows cannot be resolved by the automated runner. They require a human reviewer to examine evidence and supply an override via `--reviewer-overrides`. Without all five being set to PASS (or FAIL), the verdict caps at INCOMPLETE.
+
+### IBD-1 — Historical Validation Evidence Review
+
+| Status | Means | Action |
+|---|---|---|
+| PASS (via override) | Reviewer confirmed BSVA's IBD validation report covers consensus rule changes for the relevant period | None — include artefact reference in override file |
+| FAIL (via override) | Reviewer found IBD evidence insufficient or absent | Report to BSVA; do not issue GO verdict until resolved |
+| SKIPPED / absent | No override file supplied or IBD-1 key missing from override | Supply override YAML with a real artefact reference |
+
+---
+
+### FR-4 — Historical Chain Validation Evidence
+
+| Status | Means | Action |
+|---|---|---|
+| PASS (via override) | Reviewer confirmed the same IBD evidence covers FR-4 (historical chain validation) | None |
+| FAIL (via override) | Evidence does not cover FR-4 scope | Report to BSVA |
+| SKIPPED / absent | No override or key missing | Supply override; FR-4 artefact is typically the same as IBD-1 |
+
+---
+
+### NFR-1 — Upstream Availability Guarantees
+
+| Status | Means | Action |
+|---|---|---|
+| PASS (via override) | Reviewer confirmed 30-day uptime evidence meets the required availability threshold | None — include uptime CSV reference |
+| FAIL (via override) | Uptime evidence shows availability below threshold or evidence is absent | Report to BSVA; CONDITIONAL_GO is the maximum verdict until resolved |
+| SKIPPED / absent | No override or key missing | Supply override with uptime CSV reference |
+
+---
+
+### NFR-8 — API Stability and Versioning
+
+| Status | Means | Action |
+|---|---|---|
+| PASS (via override) | Reviewer confirmed BSVA's versioning policy provides a minimum 6-month deprecation window | None |
+| FAIL (via override) | Policy documentation absent or does not meet the deprecation window requirement | Report to BSVA |
+| SKIPPED / absent | No override or key missing | Supply override with policy document reference |
+
+---
+
+### NFR-9 — API Pricing and Access Model
+
+| Status | Means | Action |
+|---|---|---|
+| PASS (via override) | Reviewer confirmed BSVA pricing is competitive with SV Node operator costs at TNG's anticipated volumes | None |
+| FAIL (via override) | Pricing documentation absent or not assessed | Report to BSVA |
+| SKIPPED / absent | No override or key missing | Supply override with pricing document reference |
+
+---
+
+## Quick-reference: verdict outcomes
+
+| Verdict | Exit code | Typical cause |
+|---|---|---|
+| GO | 0 | All Critical and Important tests PASS; all 5 doc-review rows overridden to PASS |
+| NO_GO | 1 | Any Critical test FAILed, or a doc-review override set to FAIL |
+| CONDITIONAL_GO | 2 | All Critical pass; one or more Important tests FAILed or were SKIPPED |
+| INCOMPLETE | 3 | One or more doc-review rows have no override; or a required automated test has no result |
+| Config error | 4 | Bad or missing configuration file |
