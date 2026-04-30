@@ -94,6 +94,7 @@ type Limits struct {
 	FR8PriorityLevels   []string      `yaml:"fr8_priority_levels"`
 	NFR13MaxProbeRate   int           `yaml:"nfr13_max_probe_rate"`
 	NFR13ProbeDuration  time.Duration `yaml:"nfr13_probe_duration"`
+	PERF1RampSteps      []int         `yaml:"perf1_ramp_steps"`
 }
 
 // loadYAMLFile parses a YAML file into a Config without applying defaults
@@ -269,5 +270,8 @@ func mergeYAML(dst *Config, src Config) {
 	}
 	if src.Limits.NFR13ProbeDuration != 0 {
 		dst.Limits.NFR13ProbeDuration = src.Limits.NFR13ProbeDuration
+	}
+	if len(src.Limits.PERF1RampSteps) > 0 {
+		dst.Limits.PERF1RampSteps = src.Limits.PERF1RampSteps
 	}
 }

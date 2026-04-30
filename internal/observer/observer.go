@@ -3,7 +3,6 @@ package observer
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -95,7 +94,6 @@ func (o *Observer) Run(ctx context.Context, until time.Time) []TipSnapshot {
 func DivergenceCount(snapshots []TipSnapshot) int {
 	// Group by ~50ms time window (since polls happen at the same moment, snapshots
 	// from one poll round share the same Time within microseconds).
-	type key time.Time
 	rounds := map[time.Time]map[string]string{}
 	for _, s := range snapshots {
 		// Round Time to interval-bucket (1s precision suffices).
@@ -139,7 +137,7 @@ func ReorgsObserved(snapshots []TipSnapshot) []ReorgEvent {
 				})
 			}
 		}
-		_ = fmt.Sprintf("%s", src) // keep import live
+		_ = src // used as map key above
 	}
 	return events
 }

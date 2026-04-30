@@ -41,3 +41,4 @@ limits:
     - priority
   nfr13_max_probe_rate: 100
   nfr13_probe_duration: 1s
+  perf1_ramp_steps: [10, 50, 100, 250]

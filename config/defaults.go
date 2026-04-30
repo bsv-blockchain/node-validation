@@ -51,6 +51,9 @@ func applyDefaults(c *Config) {
 	if c.Limits.NFR13ProbeDuration == 0 {
 		c.Limits.NFR13ProbeDuration = 5 * time.Second
 	}
+	if len(c.Limits.PERF1RampSteps) == 0 {
+		c.Limits.PERF1RampSteps = []int{10, 50, 100, 250}
+	}
 	if c.ReportJSON == "" {
 		c.ReportJSON = "report.json"
 	}
