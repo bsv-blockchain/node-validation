@@ -13,7 +13,7 @@
 //  3. Verify p95 latency ≤ Limits.FR10LatencyTargetMs (default 100ms).
 //  4. Address-history queries: per SP2 §2 absent; recorded as fail with note.
 //
-// Acceptance criteria (from FR-10):
+// Acceptance criteria:
 //   - p95 latency ≤ 100 ms for tx-by-id, block-by-hash, block-by-height.
 //   - Address-history queries supported with pagination.
 //   - Returned data matches SV Node for sampled comparisons (deferred to SP9).

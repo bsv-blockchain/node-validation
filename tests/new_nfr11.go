@@ -14,7 +14,7 @@
 //     endpoint (Teranode RPC); try authenticated; record both outcomes.
 //  3. Rate-limit headers (overlap with NEW-NFR13) — not parsed in this test.
 //
-// Acceptance criteria (per NFR-11):
+// Acceptance criteria:
 //   - TLS 1.2 or higher negotiated where TLS is in use.
 //   - Authenticated endpoint rejects unauthenticated requests.
 //   - No mandatory plain-text transport for production-relevant endpoints.

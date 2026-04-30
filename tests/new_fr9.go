@@ -15,7 +15,7 @@
 //  5. Wait up to 5s for a rejected_tx event on /p2p-ws carrying tx2's txid.
 //  6. Mine; verify tx1 is the one mined.
 //
-// Acceptance criteria (from FR-9):
+// Acceptance criteria:
 //   - Conflicting tx detected synchronously by RPC.
 //   - Notification delivered within seconds.
 //   - Both zero-confirmation and low-confirmation cases handled.

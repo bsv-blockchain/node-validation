@@ -17,7 +17,7 @@
 //     cross-side observation.
 //  6. Compute % observed cross-side within Cfg.Durations.DefaultPropagation.
 //
-// Acceptance criteria (from INTER-2):
+// Acceptance criteria:
 //   - ≥99% of "Teranode only" group appears in SV Node mempool within 10s.
 //   - ≥99% of "SV Node only" group appears in Teranode mempool within 10s.
 //   - "Both" group: each tx accepted by at least one backend; no

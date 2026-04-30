@@ -7,14 +7,14 @@
 //	Verify Teranode exposes a fee estimation API and that its predictions
 //	correlate with observed inclusion latency.
 //
-// Method (per SP1 spec §7.13):
+// Method:
 //  1. Discovery determines the fee-estimation endpoint. Per SP2 §9, the
 //     endpoint estimatefee is registered but routes to handleUnimplemented
 //     (returns ErrRPCUnimplemented = -1). Test reports FEATURE_NOT_AVAILABLE.
 //  2. If the endpoint surprisingly works (drift since SP2), record the
 //     response and flag the unexpected positive result.
 //
-// Acceptance criteria (from FR-8):
+// Acceptance criteria:
 //   - Endpoint returns within 1 s.
 //   - Estimates reflect recent block inclusion.
 //   - Multiple priority levels supported.

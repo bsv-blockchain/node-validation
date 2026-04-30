@@ -11,6 +11,10 @@
 //  1. Load tests/testdata/historical_utxos.yaml (≥10 fixture spend txs).
 //  2. Submit each to Teranode and SV Node.
 //  3. Compare via internal/compare.
+//
+// Acceptance criteria:
+//   - Every fixture UTXO spend accepted/rejected identically by Teranode and SV Node.
+//   - Zero divergence across all ≥10 fixture transactions.
 package tests
 
 import (

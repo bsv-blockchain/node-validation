@@ -14,7 +14,7 @@
 //     getmempoolinfo — per SP2 §10 these are absent or unimplemented.
 //     Tests assert the expected absence as positive findings.
 //
-// Acceptance criteria (from FR-11):
+// Acceptance criteria:
 //   - Each of four query types succeeds (recorded honestly per SP2).
 //   - Filtering and chain-traversal results match constructed ground truth
 //     (deferred since the underlying queries are absent).

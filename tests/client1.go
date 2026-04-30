@@ -19,7 +19,7 @@
 //  5. Mid-run, force the notification stream closed; reconnect (fresh
 //     NotificationClient); verify catch-up via the cached node_status.
 //
-// Acceptance criteria (from CLIENT-1):
+// Acceptance criteria:
 //   - Stable session.
 //   - Notification ↔ REST agreement on blocks.
 //   - All 50 broadcast txs reach mempool and are mined.

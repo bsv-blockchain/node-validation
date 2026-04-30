@@ -15,7 +15,7 @@
 //  2. For each fixture, submit to Teranode and SV Node.
 //  3. Compare accept/reject + rejection-category via internal/compare.
 //
-// Acceptance criteria (from PC-2):
+// Acceptance criteria:
 //   - 100% match on valid/invalid decisions for all fixtures.
 //   - Rejection categories match where applicable.
 package tests

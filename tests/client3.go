@@ -20,7 +20,7 @@
 //  6. Simulate midpoint reconnection (fresh NotificationClient); verify
 //     cached node_status arrives.
 //
-// Acceptance criteria (from CLIENT-3):
+// Acceptance criteria:
 //   - ≥99% of generated txids reachable via REST after mining (proxy for
 //     "100% of expected notifications delivered" per SP2 §3 architecture).
 //   - Strict block-height non-decreasing order via subscription.

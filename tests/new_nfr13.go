@@ -13,7 +13,7 @@
 //     effort), body. Wait briefly; verify normal service resumes.
 //  3. Report observed limit (or "no_limit_reached").
 //
-// Acceptance criteria (per NFR-13):
+// Acceptance criteria:
 //   - Probing exposes a limit OR documented ceiling reached without one.
 //   - If a limit is hit, response includes retry-after-style guidance (best
 //     effort given the current RPC client's error type).

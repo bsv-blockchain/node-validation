@@ -7,14 +7,14 @@
 //	Verify identical operations under similar load produce identical
 //	results.
 //
-// Method (idle conditions only per SP7 spec §4.2 Q2=A):
+// Method:
 //  1. Pick three pure read operations: getbestblockhash, getblock <known
 //     hash>, getrawtransaction <known confirmed txid>.
 //  2. For each, capture a baseline response.
 //  3. Repeat each Cfg.Durations.NewNFR7Iterations (default 100) times.
 //  4. Verify every iteration's response is byte-identical to the baseline.
 //
-// Acceptance criteria (from NFR-7):
+// Acceptance criteria:
 //   - Read operations return identical results across iterations.
 //   - No load-induced variation — DEFERRED to SP9 with note (PERF-1
 //     infrastructure required for 100/500 TPS).

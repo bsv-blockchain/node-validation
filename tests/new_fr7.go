@@ -17,7 +17,7 @@
 //  5. Mine 1 block; wait for tip propagation; fetch the block from
 //     Teranode REST; verify all chain txs are in it.
 //
-// Acceptance criteria (from FR-7):
+// Acceptance criteria:
 //   - Chain of depth ≥25 fully accepted into Teranode mempool.
 //   - Chain visible in SV Node mempool within default_propagation seconds.
 //   - All chain members eventually mined without intermediate confirmations.
