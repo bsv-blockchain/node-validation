@@ -138,8 +138,12 @@ overrides:
 		"--report-html", filepath.Join(dir, "r.html"),
 	)
 	out, _ := cmd.CombinedOutput()
-	if cmd.ProcessState.ExitCode() != 3 {
-		t.Fatalf("with overrides but zero registered tests, want exit 3 (NOT_RUN dominates), got %d\noutput:\n%s",
+	// With all 19 tests registered: critical tests skip (not NOT_RUN), so
+	// INCOMPLETE is not triggered. Reviewer overrides satisfy doc-review rows.
+	// OPS-3 (important) still fails without a live environment → CONDITIONAL_GO
+	// (exit 2). Overrides alone do not produce a full GO.
+	if cmd.ProcessState.ExitCode() != 2 {
+		t.Fatalf("with overrides but no live env, want exit 2 (CONDITIONAL_GO), got %d\noutput:\n%s",
 			cmd.ProcessState.ExitCode(), out)
 	}
 }
