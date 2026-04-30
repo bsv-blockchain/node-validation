@@ -8,6 +8,35 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
 
+// stubMempool is a mempoolReader that returns a fixed txid list.
+type stubMempool struct{ txids []string }
+
+func (s *stubMempool) GetRawMempool(_ context.Context) ([]string, error) {
+	return s.txids, nil
+}
+
+func TestPollMempoolUntil_allPresent(t *testing.T) {
+	rpc := &stubMempool{txids: []string{"aaa", "bbb", "ccc"}}
+	seen, allSeen := pollMempoolUntil(context.Background(), rpc, []string{"aaa", "bbb"}, 2*time.Second)
+	if !allSeen {
+		t.Error("want allSeen=true")
+	}
+	if len(seen) != 2 {
+		t.Errorf("seen count: %d want 2", len(seen))
+	}
+}
+
+func TestPollMempoolUntil_timeoutPartial(t *testing.T) {
+	rpc := &stubMempool{txids: []string{"aaa"}}
+	seen, allSeen := pollMempoolUntil(context.Background(), rpc, []string{"aaa", "missing"}, 300*time.Millisecond)
+	if allSeen {
+		t.Error("want allSeen=false (missing not present)")
+	}
+	if !seen["aaa"] {
+		t.Error("aaa should be seen")
+	}
+}
+
 func TestDeriveStatus_allPass(t *testing.T) {
 	c := []testrunner.Check{
 		ok("a", ""),

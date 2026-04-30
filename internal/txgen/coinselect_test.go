@@ -118,3 +118,33 @@ func TestConfirm_addsChange(t *testing.T) {
 		t.Errorf("balance after Confirm: %d", got)
 	}
 }
+
+func TestConfirmMulti_marksSpentAndAddsAll(t *testing.T) {
+	f := newFundedFunder(t, 1_000, 2_000)
+	utxos := f.SnapshotUTXOs()
+	if len(utxos) != 2 {
+		t.Fatalf("setup: utxos=%d", len(utxos))
+	}
+	newOuts := []UTXO{
+		{TxID: [32]byte{0xaa}, Vout: 0, Satoshis: 5_000, Script: utxos[0].Script},
+		{TxID: [32]byte{0xaa}, Vout: 1, Satoshis: 6_000, Script: utxos[0].Script},
+		{TxID: [32]byte{0xaa}, Vout: 2, Satoshis: 7_000, Script: utxos[0].Script},
+	}
+	f.ConfirmMulti(utxos, newOuts)
+	if got := f.Balance(); got != 18_000 {
+		t.Errorf("balance after ConfirmMulti: %d want 18000", got)
+	}
+	after := f.SnapshotUTXOs()
+	if len(after) != 3 {
+		t.Errorf("utxo count after ConfirmMulti: %d want 3", len(after))
+	}
+}
+
+func TestConfirmMulti_emptyNewOutputsActsLikeMarkSpent(t *testing.T) {
+	f := newFundedFunder(t, 1_000, 2_000, 3_000)
+	utxos := f.SnapshotUTXOs()
+	f.ConfirmMulti(utxos[:2], nil)
+	if got := f.Balance(); got != 3_000 {
+		t.Errorf("balance: %d", got)
+	}
+}

@@ -249,3 +249,33 @@ func TestBuildChain_depthZeroRejected(t *testing.T) {
 		t.Error("depth=0 should error")
 	}
 }
+
+func TestBuildSplitter_outputCount(t *testing.T) {
+	f, _ := NewFunder(nil, testdata.TestWIFRegtest, nil)
+	addrScript, _ := P2PKHScript(f.Address())
+	f.AddUTXO(UTXO{TxID: [32]byte{0xff}, Vout: 0, Satoshis: 1_000_000_000, Script: addrScript})
+	res, err := f.Builder().BuildSplitter(50, 100_000, 500)
+	if err != nil {
+		t.Fatalf("BuildSplitter: %v", err)
+	}
+	parsed, err := bt.NewTxFromString(res.HexTx)
+	if err != nil {
+		t.Fatalf("parse: %v", err)
+	}
+	// 50 splitter outputs + maybe 1 change → 50 or 51.
+	if n := len(parsed.Outputs); n != 50 && n != 51 {
+		t.Errorf("outputs: %d want 50 or 51", n)
+	}
+	for i := 0; i < 50; i++ {
+		if parsed.Outputs[i].Satoshis != 100_000 {
+			t.Errorf("output %d sats: %d", i, parsed.Outputs[i].Satoshis)
+		}
+	}
+}
+
+func TestBuildSplitter_zeroErrors(t *testing.T) {
+	f, _ := NewFunder(nil, testdata.TestWIFRegtest, nil)
+	if _, err := f.Builder().BuildSplitter(0, 1_000, 500); err == nil {
+		t.Error("n=0 should error")
+	}
+}

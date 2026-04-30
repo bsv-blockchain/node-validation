@@ -15,6 +15,51 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
 
+// mempoolReader is satisfied by both *teranode.RPCClient and *svnode.RPCClient,
+// which both expose GetRawMempool(ctx) ([]string, error) with the same shape.
+type mempoolReader interface {
+	GetRawMempool(ctx context.Context) ([]string, error)
+}
+
+// Compile-time interface satisfaction check.
+var _ mempoolReader = (*teranode.RPCClient)(nil)
+
+// pollMempoolUntil polls rpc.GetRawMempool every 250ms until all wantTxIDs
+// are present or the timeout passes. Returns the set of txids that were
+// observed (subset of wantTxIDs) and whether the full set was matched.
+//
+// Usable for both teranode.RPCClient and svnode.RPCClient — both expose
+// GetRawMempool() ([]string, error) with the same shape.
+func pollMempoolUntil(ctx context.Context, rpc mempoolReader, wantTxIDs []string, timeout time.Duration) (seen map[string]bool, allSeen bool) {
+	seen = make(map[string]bool, len(wantTxIDs))
+	want := make(map[string]bool, len(wantTxIDs))
+	for _, id := range wantTxIDs {
+		want[id] = true
+	}
+	deadline := time.Now().Add(timeout)
+	ticker := time.NewTicker(250 * time.Millisecond)
+	defer ticker.Stop()
+	for time.Now().Before(deadline) {
+		mempool, err := rpc.GetRawMempool(ctx)
+		if err == nil {
+			for _, id := range mempool {
+				if want[id] {
+					seen[id] = true
+				}
+			}
+			if len(seen) == len(want) {
+				return seen, true
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return seen, false
+		case <-ticker.C:
+		}
+	}
+	return seen, false
+}
+
 // ok returns a passing acceptance check.
 func ok(desc, detail string) testrunner.Check {
 	return testrunner.Check{Description: desc, Required: true, Pass: true, Detail: detail}

@@ -188,6 +188,28 @@ func (b *Builder) BuildChain(req BuildRequest, depth int) ([]BuildResult, error)
 	return out, nil
 }
 
+// BuildSplitter constructs a transaction with `n` outputs, each paying
+// `satsPerOutput` to the funder's own address. Used by tests that need
+// many independent UTXOs (INTER-2 needs 1000).
+func (b *Builder) BuildSplitter(n int, satsPerOutput uint64, feeRate uint64) (BuildResult, error) {
+	if n < 1 {
+		return BuildResult{}, fmt.Errorf("BuildSplitter: n must be ≥1, got %d", n)
+	}
+	addrScript, err := P2PKHScript(b.funder.Address())
+	if err != nil {
+		return BuildResult{}, fmt.Errorf("p2pkh script: %w", err)
+	}
+	outputs := make([]Output, 0, n)
+	for i := 0; i < n; i++ {
+		outputs = append(outputs, Output{
+			Script:      addrScript,
+			Satoshis:    satsPerOutput,
+			Description: fmt.Sprintf("splitter[%d]", i),
+		})
+	}
+	return b.BuildP2PKH(BuildRequest{Outputs: outputs, FeeRate: feeRate})
+}
+
 // btScript wraps a raw script as a *bscript.Script.
 func btScript(b []byte) *bscript.Script {
 	s := bscript.Script(b)

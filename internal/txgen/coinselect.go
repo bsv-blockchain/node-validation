@@ -64,11 +64,22 @@ func (f *Funder) MarkSpent(spent []UTXO) {
 	f.state.utxos = out
 }
 
+// ConfirmMulti marks `spent` UTXOs as no longer available and registers
+// every UTXO in `newOutputs` as spendable. Used by tests that mine
+// transactions creating multiple outputs (e.g. the INTER-2 splitter).
+func (f *Funder) ConfirmMulti(spent []UTXO, newOutputs []UTXO) {
+	f.MarkSpent(spent)
+	for _, u := range newOutputs {
+		f.AddUTXO(u)
+	}
+}
+
 // Confirm marks inputs spent and (optionally) adds the change UTXO.
 // Tests call this after a successful broadcast.
 func (f *Funder) Confirm(spent []UTXO, change *UTXO) {
-	f.MarkSpent(spent)
-	if change != nil {
-		f.AddUTXO(*change)
+	if change == nil {
+		f.ConfirmMulti(spent, nil)
+		return
 	}
+	f.ConfirmMulti(spent, []UTXO{*change})
 }
