@@ -1,0 +1,80 @@
+- id: ibd2-001
+  category: p2pkh-extra-witness
+  description: P2PKH spend with extra witness data in scriptSig (CLEANSTACK violation)
+  hex_tx: 01000000016060606060606060606060606060606060606060606060606060606060606060000000006f04deadbeef473044000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: extra push before sig violates CLEANSTACK; dummy UTXO causes UTXO_MISSING first
+- id: ibd2-002
+  category: p2sh-reveal-1of1
+  description: P2SH spend revealing 1-of-1 multisig redeemScript
+  hex_tx: 01000000016161616161616161616161616161616161616161616161616161616161616161000000006f004730000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000412551210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179851aeffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: P2SH 1-of-1 multisig spend; dummy UTXO causes UTXO_MISSING
+- id: ibd2-003
+  category: p2sh-hash-mismatch
+  description: P2SH spend with mismatched redeemScript hash (always-fail)
+  hex_tx: 010000000162626262626262626262626262626262626262626262626262626262626262620000000003025161ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: redeemScript hash does not match locking script; fails at script eval
+- id: ibd2-004
+  category: p2ms-under-signed
+  description: 2-of-3 multisig spend with only 1 signature (insufficient)
+  hex_tx: 01000000016363636363636363636363636363636363636363636363636363636363636363000000004900473000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000041ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: requires 2 sigs, provides 1; both backends reject same way
+- id: ibd2-005
+  category: non-canonical-der
+  description: P2PKH spend with non-canonical DER signature (extra leading zero on R)
+  hex_tx: 01000000016464646464646464646464646464646464646464646464646464646464646464000000006b48304502210001000000000000000000000000000000000000000000000000000000000000000220010000000000000000000000000000000000000000000000000000000000000041210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: DER R component has unnecessary leading zero; non-canonical encoding
+- id: ibd2-006
+  category: immature-coinbase
+  description: Spend of coinbase output before maturity (100 blocks on regtest)
+  hex_tx: 010000000101010101010101010101010101010101010101010101010101010101010101010000000000000000000150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: coinbase TXIDs are not real; both backends reject with UTXO_MISSING
+- id: ibd2-007
+  category: future-locktime
+  description: Spend with nLocktime in the future (year ~2096); sequence=0 enforces it
+  hex_tx: 010000000170707070707070707070707070707070707070707070707070707070707070700000000000000000000150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00286bee
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: dummy UTXO; locktime enforcement also causes rejection
+- id: ibd2-008
+  category: negative-output
+  description: Transaction with negative satoshi output value (always-fail)
+  hex_tx: 010000000171717171717171717171717171717171717171717171717171717171717171710000000000ffffffff01ffffffffffffffff1976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: MALFORMED
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: negative output value (0xffffffffffffffff interpreted as -1); both backends reject as MALFORMED
+- id: ibd2-009
+  category: dust-output
+  description: Transaction creating dust output of 1 satoshi (≤546 sat threshold)
+  hex_tx: 010000000172727272727272727272727272727272727272727272727272727272727272720000000000ffffffff0101000000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: dust output (1 sat); dummy UTXO causes UTXO_MISSING before dust check
+- id: ibd2-010
+  category: negative-fee
+  description: Transaction where output (200k sat) exceeds input (100k sat) — negative fee
+  hex_tx: 010000000173737373737373737373737373737373737373737373737373737373737373730000000000ffffffff01400d0300000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/ibd2.go
+  notes: output > input makes fee negative; both backends reject (UTXO_MISSING for dummy input)

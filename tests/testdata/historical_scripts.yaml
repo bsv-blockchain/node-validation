@@ -1,0 +1,240 @@
+- id: pc2-p2sh-001
+  category: complex-p2sh
+  description: P2SH wrapping 2-of-3 multisig (~105-byte redeemScript)
+  hex_tx: 0100000001101010101010101010101010101010101010101010101010101010101010101000000000b347ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab4c6952210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798210379be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179853aeffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: dummy input; both backends reject with UTXO_MISSING
+- id: pc2-p2sh-002
+  category: complex-p2sh
+  description: P2SH wrapping 1-of-1 multisig
+  hex_tx: 01000000011111111111111111111111111111111111111111111111111111111111111111000000006e47ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab2551210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f8179851aeffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: dummy input; both backends reject with UTXO_MISSING
+- id: pc2-p2sh-003
+  category: complex-p2sh
+  description: P2SH wrapping OP_RETURN redeemScript (always-fail)
+  hex_tx: 01000000011212121212121212121212121212121212121212121212121212121212121212000000004a47ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab016affffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: OP_RETURN redeem script always fails; dummy UTXO causes UTXO_MISSING first
+- id: pc2-p2sh-004
+  category: complex-p2sh
+  description: P2SH-of-P2SH (nested P2SH)
+  hex_tx: 01000000011313131313131313131313131313131313131313131313131313131313131313000000006047ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab17a91423b0ad3477f2178bc0b3eed26e4e6316f4e83aa187ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: outer redeemScript is itself a P2SH locking script; nested P2SH
+- id: pc2-p2sh-005
+  category: complex-p2sh
+  description: P2SH wrapping 200-byte NOP-heavy redeemScript
+  hex_tx: 0100000001141414141414141414141414141414141414141414141414141414141414141400000000fd130147ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab4cc9616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616161616151ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: exercises handling of large redeemScript with many NOPs
+- id: pc2-p2sh-006
+  category: complex-p2sh
+  description: P2SH wrapping P2PKH redeemScript
+  hex_tx: 01000000011515151515151515151515151515151515151515151515151515151515151515000000006247ababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababababab1976a914751e76e8199196d454941c45d1b3a323f1433bd688acffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:complexP2SHFixtures
+  notes: P2SH wrapping a standard P2PKH redeemScript
+- id: pc2-restricted-001
+  category: restricted-opcodes
+  description: OP_VER (0x62) in scriptSig — universally invalid
+  hex_tx: 01000000012020202020202020202020202020202020202020202020202020202020202020000000000162ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_VER remains invalid post-Genesis
+- id: pc2-restricted-002
+  category: restricted-opcodes
+  description: OP_RESERVED (0x50) in scriptSig
+  hex_tx: 01000000012121212121212121212121212121212121212121212121212121212121212121000000000150ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_RESERVED (0x50) is invalid in any executed context
+- id: pc2-restricted-003
+  category: restricted-opcodes
+  description: OP_RESERVED1 (0x89) in scriptSig
+  hex_tx: 01000000012222222222222222222222222222222222222222222222222222222222222222000000000189ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_RESERVED1 (0x89) is universally invalid
+- id: pc2-restricted-004
+  category: restricted-opcodes
+  description: OP_RESERVED2 (0x8a) in scriptSig
+  hex_tx: 0100000001232323232323232323232323232323232323232323232323232323232323232300000000018affffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_RESERVED2 (0x8a) is universally invalid
+- id: pc2-restricted-005
+  category: restricted-opcodes
+  description: OP_VERIF (0x65) in scriptSig — invalid even in unexecuted branch
+  hex_tx: 01000000012424242424242424242424242424242424242424242424242424242424242424000000000165ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_VERIF (0x65) is invalid even in unexecuted branch
+- id: pc2-restricted-006
+  category: restricted-opcodes
+  description: OP_VERNOTIF (0x66) in scriptSig — invalid even in unexecuted branch
+  hex_tx: 01000000012525252525252525252525252525252525252525252525252525252525252525000000000166ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:restrictedOpcodeFixtures
+  notes: OP_VERNOTIF (0x66) is invalid even in unexecuted branch
+- id: pc2-cleanstack-001
+  category: cleanstack
+  description: scriptSig pushes extra OP_1 onto stack (CLEANSTACK violation)
+  hex_tx: 01000000013030303030303030303030303030303030303030303030303030303030303030000000000151ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: extra item on stack violates CLEANSTACK rule
+- id: pc2-cleanstack-002
+  category: cleanstack
+  description: scriptSig pushes two extra values (CLEANSTACK violation)
+  hex_tx: 0100000001313131313131313131313131313131313131313131313131313131313131313100000000025152ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: two extra stack items violate CLEANSTACK
+- id: pc2-cleanstack-003
+  category: cleanstack
+  description: scriptSig pushes extra 20-byte value (CLEANSTACK violation)
+  hex_tx: 010000000132323232323232323232323232323232323232323232323232323232323232320000000015140102030405060708090a0b0c0d0e0f1011121314ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: 20-byte extra push on stack violates CLEANSTACK
+- id: pc2-cleanstack-004
+  category: cleanstack
+  description: scriptSig pushes extra 32-byte value (CLEANSTACK violation)
+  hex_tx: 01000000013333333333333333333333333333333333333333333333333333333333333333000000002120fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0efeeedecebeae9e8e7e6e5e4e3e2e1e0ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: 32-byte extra push on stack violates CLEANSTACK
+- id: pc2-cleanstack-005
+  category: cleanstack
+  description: scriptSig pushes extra false (0x00) onto stack
+  hex_tx: 0100000001343434343434343434343434343434343434343434343434343434343434343400000000020100ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: extra false value on stack violates CLEANSTACK
+- id: pc2-cleanstack-006
+  category: cleanstack
+  description: scriptSig pushes extra non-canonical true (0x02) then OP_TRUE
+  hex_tx: 010000000135353535353535353535353535353535353535353535353535353535353535350000000003010251ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:cleanstackFixtures
+  notes: two extra items including non-canonical true violate CLEANSTACK
+- id: pc2-minimaldata-001
+  category: minimaldata
+  description: OP_PUSHDATA1 encoding 1-byte data (non-minimal; should use OP_DATA1)
+  hex_tx: 0100000001404040404040404040404040404040404040404040404040404040404040404000000000034c0101ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: 'MINIMALDATA violation: OP_PUSHDATA1 for 1-byte data'
+- id: pc2-minimaldata-002
+  category: minimaldata
+  description: OP_PUSHDATA1 encoding 20-byte data (non-minimal; should use OP_DATA20)
+  hex_tx: 0100000001414141414141414141414141414141414141414141414141414141414141414100000000164c140102030405060708090a0b0c0d0e0f1011121314ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: 'MINIMALDATA violation: OP_PUSHDATA1 for 20-byte data'
+- id: pc2-minimaldata-003
+  category: minimaldata
+  description: OP_PUSHDATA1 encoding 75-byte data (non-minimal boundary; should use OP_DATA75)
+  hex_tx: 01000000014242424242424242424242424242424242424242424242424242424242424242000000004d4c4b000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f404142434445464748494affffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: MINIMALDATA violation at 75-byte boundary
+- id: pc2-minimaldata-004
+  category: minimaldata
+  description: OP_PUSHDATA2 encoding 10-byte data (non-minimal; should use OP_DATA10)
+  hex_tx: 01000000014343434343434343434343434343434343434343434343434343434343434343000000000d4d0a00aaaaaaaaaaaaaaaaaaaaffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: 'MINIMALDATA violation: OP_PUSHDATA2 for 10-byte data'
+- id: pc2-minimaldata-005
+  category: minimaldata
+  description: OP_PUSHDATA1 encoding 0x81 (non-minimal; should use OP_1NEGATE)
+  hex_tx: 0100000001444444444444444444444444444444444444444444444444444444444444444400000000034c0181ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: 'MINIMALDATA violation: non-minimal encoding of -1'
+- id: pc2-minimaldata-006
+  category: minimaldata
+  description: OP_PUSHDATA1 encoding 33-byte pubkey (non-minimal; should use OP_DATA33)
+  hex_tx: 0100000001454545454545454545454545454545454545454545454545454545454545454500000000234c210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:minimaldataFixtures
+  notes: 'MINIMALDATA violation: OP_PUSHDATA1 for 33-byte compressed pubkey'
+- id: pc2-malleability-001
+  category: malleability
+  description: P2PKH spend with DER signature + 1 trailing garbage byte
+  hex_tx: 01000000015050505050505050505050505050505050505050505050505050505050505050000000006b48304402200102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f200220018182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f41de210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: trailing byte after sighash type makes DER non-canonical
+- id: pc2-malleability-002
+  category: malleability
+  description: P2PKH spend with DER signature + 2 trailing garbage bytes
+  hex_tx: 01000000015151515151515151515151515151515151515151515151515151515151515151000000006c49304402200102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f200220018182838485868788898a8b8c8d8e8f909192939495969798999a9b9c9d9e9f41dead210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: two trailing bytes after sighash make DER non-canonical
+- id: pc2-malleability-003
+  category: malleability
+  description: P2PKH spend without SIGHASH_FORKID (BSV-specific rejection)
+  hex_tx: 01000000015252525252525252525252525252525252525252525252525252525252525252000000006a473044022001000000000000000000000000000000000000000000000000000000000000000220010000000000000000000000000000000000000000000000000000000000000001210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: missing SIGHASH_FORKID (0x40) bit causes script failure on BSV
+- id: pc2-malleability-004
+  category: malleability
+  description: P2PKH spend with padding-zero DER R/S (non-canonical encoding)
+  hex_tx: 01000000015353535353535353535353535353535353535353535353535353535353535353000000006c4930460221000100000000000000000000000000000000000000000000000000000000000000022100010000000000000000000000000000000000000000000000000000000000000041210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: extra leading zero on R and S makes DER non-canonical (malleability vector)
+- id: pc2-malleability-005
+  category: malleability
+  description: P2PKH spend with zero-length signature (empty push)
+  hex_tx: 01000000015454545454545454545454545454545454545454545454545454545454545454000000002300210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: empty signature causes CHECKSIG to return false
+- id: pc2-malleability-006
+  category: malleability
+  description: P2PKH spend with SIGHASH_NONE|FORKID (historical malleability variant)
+  hex_tx: 01000000015555555555555555555555555555555555555555555555555555555555555555000000006a473044022001000000000000000000000000000000000000000000000000000000000000000220010000000000000000000000000000000000000000000000000000000000000042210279be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798ffffffff0150c30000000000001976a914751e76e8199196d454941c45d1b3a323f1433bd688ac00000000
+  expected_valid: false
+  expected_category: UTXO_MISSING
+  provenance: synthetic SP8 fixture; cmd/gen-fixtures/pc2.go:malleabilityFixtures
+  notes: SIGHASH_NONE|FORKID=0x42; valid sighash type but wrong sig — both backends reject with UTXO_MISSING (dummy UTXO)

@@ -1,4 +1,4 @@
-.PHONY: build lint test test-short cover gen verify clean
+.PHONY: build lint test test-short cover gen gen-fixtures verify clean
 
 SHELL := /bin/bash
 GO := go
@@ -8,6 +8,10 @@ build:
 	$(GO) build -ldflags "$(LDFLAGS)" -o bin/teranode-acceptance ./cmd/teranode-acceptance
 	$(GO) build -o bin/gen-traceability ./cmd/gen-traceability
 	$(GO) build -o bin/derive-address ./cmd/derive-address
+	$(GO) build -o bin/gen-fixtures ./cmd/gen-fixtures
+
+gen-fixtures: build
+	./bin/gen-fixtures --out tests/testdata/
 
 lint:
 	$(GO) vet ./...
@@ -34,6 +38,9 @@ verify: gen
 	@if [ -f docs/discovery.yaml ] && grep -q "^  - id:" docs/discovery.yaml ; then \
 	  go run ./scripts/check-refs.go --discovery docs/discovery.md --yaml docs/discovery.yaml --upstream /Users/oskarsson/gitcheckout/teranode ; \
 	fi
+	@./bin/gen-fixtures --out tests/testdata/
+	@git diff --exit-code tests/testdata/historical_scripts.yaml tests/testdata/historical_utxos.yaml \
+	  || (echo "fixture YAML out of sync — run 'make gen-fixtures' and commit" && exit 1)
 
 clean:
 	rm -rf bin/ report.json report.html coverage.out coverage.html
