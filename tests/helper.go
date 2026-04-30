@@ -3,6 +3,7 @@ package tests
 import (
 	"context"
 	"crypto/tls"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -234,4 +235,11 @@ func classifyRateLimit(err error) (int, bool) {
 		return 503, true
 	}
 	return 0, false
+}
+
+// jsonUnmarshalLooseImpl is a thin wrapper around encoding/json.Unmarshal.
+// Used by client1.go (and any future callers) to parse REST JSON responses
+// without importing encoding/json directly in the caller file.
+func jsonUnmarshalLooseImpl(b []byte, v any) error {
+	return json.Unmarshal(b, v)
 }
