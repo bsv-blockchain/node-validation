@@ -13,6 +13,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/bsv-blockchain/node-validation/internal/observer"
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
@@ -276,4 +277,122 @@ func tailBlockHeights(ctx context.Context, notif *teranode.NotificationClient, m
 			mu.Unlock()
 		}
 	}
+}
+
+// teranodeTipReader wraps *teranode.RPCClient to satisfy observer.TipReader.
+// teranode.RPCClient.GetBlockchainInfo returns (BlockchainInfo, error) rather
+// than (json.RawMessage, error), so this adapter marshals the response.
+type teranodeTipReader struct {
+	rpc *teranode.RPCClient
+}
+
+func (t *teranodeTipReader) GetBestBlockHash(ctx context.Context) (string, error) {
+	return t.rpc.GetBestBlockHash(ctx)
+}
+
+func (t *teranodeTipReader) GetBlockchainInfo(ctx context.Context) (json.RawMessage, error) {
+	info, err := t.rpc.GetBlockchainInfo(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(info)
+}
+
+// reorgResult captures the outcome of a reorg induction sub-phase.
+type reorgResult struct {
+	BaselineHash   string
+	BaselineHeight int64
+	WinnerHash     string
+	WinnerHeight   int64
+	ConvergedAt    time.Time
+	Reorged        bool
+	Err            error
+}
+
+// induceReorg manually creates competing chains and verifies convergence.
+//
+// Procedure (per SP9 spec §3.1):
+//  1. Capture baseline (svnode-1 best-block-hash).
+//  2. Mine 1 block on svnode-1 → B1.
+//  3. Wait for B1 to propagate to teranode-1.
+//  4. invalidateblock(B1) on teranode-1 (rolls teranode-1 back).
+//  5. generatetoaddress 2 blocks on teranode-1 → T1, T2 (longer chain).
+//  6. Wait for svnode-1 to reorg to T2.
+//  7. Return success/failure.
+//
+// Returns reorgResult with details. If any step fails, sets Err and returns.
+func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnapshot) reorgResult {
+	res := reorgResult{}
+	if env.Teranode == nil || env.Teranode.RPC == nil ||
+		env.SVNode == nil || env.SVNode.RPC == nil {
+		res.Err = fmt.Errorf("required clients not configured")
+		return res
+	}
+
+	// 1. Baseline.
+	baseline, err := env.SVNode.RPC.GetBestBlockHash(ctx)
+	if err != nil {
+		res.Err = fmt.Errorf("baseline: %w", err)
+		return res
+	}
+	res.BaselineHash = baseline
+
+	// 2. Mine 1 block on svnode-1.
+	addr, err := env.SVNode.RPC.GetNewAddress(ctx)
+	if err != nil {
+		res.Err = fmt.Errorf("getnewaddress: %w", err)
+		return res
+	}
+	b1Hashes, err := env.SVNode.RPC.GenerateToAddress(ctx, 1, addr)
+	if err != nil || len(b1Hashes) != 1 {
+		res.Err = fmt.Errorf("mine B1: err=%v hashes=%v", err, b1Hashes)
+		return res
+	}
+	b1 := b1Hashes[0]
+
+	// 3. Wait for propagation: poll teranode-1's tip until == b1.
+	if err := waitForTeranodeTip(ctx, env.Teranode.RPC, b1, 30*time.Second); err != nil {
+		res.Err = fmt.Errorf("B1 propagation: %w", err)
+		return res
+	}
+
+	// 4. invalidateblock(B1) on teranode-1.
+	var dummy json.RawMessage
+	if err := env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy); err != nil {
+		res.Err = fmt.Errorf("invalidateblock B1 on teranode-1: %w", err)
+		return res
+	}
+
+	// 5. generatetoaddress 2 blocks on teranode-1.
+	teranodeAddr := env.TxGen.Address()
+	var teranodeMined []string
+	if err := env.Teranode.RPC.Call(ctx, "generatetoaddress", []any{2, teranodeAddr}, &teranodeMined); err != nil {
+		res.Err = fmt.Errorf("generatetoaddress on teranode-1: %w", err)
+		return res
+	}
+	if len(teranodeMined) != 2 {
+		res.Err = fmt.Errorf("teranode-1 mined %d blocks, want 2", len(teranodeMined))
+		return res
+	}
+	t2 := teranodeMined[1]
+	res.WinnerHash = t2
+
+	// 6. Wait for svnode-1 to reorg to T2.
+	deadline := time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		current, err := env.SVNode.RPC.GetBestBlockHash(ctx)
+		if err == nil && current == t2 {
+			res.ConvergedAt = time.Now()
+			res.Reorged = true
+			return res
+		}
+		select {
+		case <-ctx.Done():
+			res.Err = ctx.Err()
+			return res
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
+	res.Err = fmt.Errorf("svnode-1 did not reorg to T2=%s within 30s", t2)
+	return res
 }
