@@ -1,0 +1,39 @@
+# docs/operator-guide-overrides-example.yaml
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# WARNING: EXAMPLE — DO NOT USE FOR REAL OPERATIONS
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+# This file demonstrates the reviewer-overrides YAML schema. Replace
+# every value with your actual evidence before running the suite with
+# --reviewer-overrides=this-file.
+#
+# Using this file as-is in a real acceptance run will produce a report
+# that records fabricated artefacts and a placeholder reviewer identity.
+# That report CANNOT be used as evidence of conformance.
+#
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+reviewer: "EXAMPLE — Replace with your name + email"
+reviewed_at: "2026-01-01T00:00:00Z"
+overrides:
+  IBD-1:
+    decision: PASS
+    artefacts: ["EXAMPLE-bsva-audit.pdf"]
+    note: "EXAMPLE — Replace with your real review of BSVA's IBD evidence."
+  FR-4:
+    decision: PASS
+    artefacts: ["EXAMPLE-bsva-audit.pdf"]
+    note: "EXAMPLE — Replace."
+  NFR-1:
+    decision: PASS
+    artefacts: ["EXAMPLE-uptime.csv"]
+    note: "EXAMPLE — Replace with real uptime evidence."
+  NFR-8:
+    decision: PASS
+    artefacts: ["EXAMPLE-versioning-policy.pdf"]
+    note: "EXAMPLE — Replace."
+  NFR-9:
+    decision: PASS
+    artefacts: ["EXAMPLE-pricing.pdf"]
+    note: "EXAMPLE — Replace."
