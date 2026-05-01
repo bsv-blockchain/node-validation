@@ -30,17 +30,14 @@ funding:
 durations:
   pc1_observation: 30m
   inter1_observation: 1h
-  perf1_per_rate: 10s
+  perf1_per_rate: 30s
   default_propagation: 10s
   client1_observation: 5m
   new_nfr7_iterations: 50
 
 limits:
-  # NOTE: Teranode v0.15.0-beta-2 + Aerospike Enterprise reject high-fanout
-  # splitter txs (>~30 outputs) with FAIL_FORBIDDEN ('failed to acquire
-  # lock'). Keep tx counts low until the underlying race is fixed upstream.
   perf1_max_tps: 100
-  inter2_tx_count: 20
+  inter2_tx_count: 100
   client3_tx_count: 50
   fr7_chain_depth: 25
   fr10_latency_target_ms: 100
@@ -50,4 +47,4 @@ limits:
     - priority
   nfr13_max_probe_rate: 1000
   nfr13_probe_duration: 5s
-  perf1_ramp_steps: [1, 2, 5]
+  perf1_ramp_steps: [10, 50, 100, 250]
