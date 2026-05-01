@@ -1,8 +1,38 @@
 # compose/svnode/bitcoin.conf.svnode-2
+# Complete per-node config (bitcoin-sv 1.1.0 does not support includeconf).
+regtest=1
+server=1
+listen=1
+txindex=1
+debug=net
+debug=mempool
+
+# RPC
+rpcuser=bitcoin
+rpcpassword=bitcoin
+rpcallowip=0.0.0.0/0
+rpcbind=0.0.0.0
+rpcport=18332
+
+# P2P listening
+port=18444
+
+# Mandatory parameters (0 = no limit)
+excessiveblocksize=0
+maxstackmemoryusageconsensus=0
+minminingtxfee=0
+
+# Misc
+maxconnections=125
+relaypriority=0
+
 disablewallet=1
 
-addnode=teranode-1:18444
-addnode=teranode-2:18444
-addnode=teranode-3:18444
+# Mesh peers (5 others, identified by docker-compose service name)
+# Teranodes' btcd-based legacy listener defaults to mainnet port 8333 despite
+# network=regtest; svnodes must therefore connect to teranodes on port 8333.
+addnode=teranode-1:8333
+addnode=teranode-2:8333
+addnode=teranode-3:8333
 addnode=svnode-1:18444
 addnode=svnode-3:18444

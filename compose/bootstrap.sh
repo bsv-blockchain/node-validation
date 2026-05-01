@@ -37,6 +37,32 @@ wait_for() {
 
 wait_for "svnode-1" 18332 "getblockchaininfo"
 wait_for "teranode-1 RPC" 19292 "getblockchaininfo" 120
+wait_for "teranode-2 RPC" 29292 "getblockchaininfo" 30
+wait_for "teranode-3 RPC" 39292 "getblockchaininfo" 30
+
+# Kick the Teranode FSM out of IDLE state on each node.
+#
+# Problem: legacy.(*Server).Start() blocks on WaitUntilFSMTransitionFromIdleState()
+# which waits for a message on the blocks-final Kafka topic.  On a fresh chain that
+# topic is empty (60 s retention) so the legacy P2P layer never starts, no blocks
+# can arrive, and the FSM never leaves IDLE — a deadlock.
+#
+# Fix: send FSMEventType=RUN (value 1) to the blockchain gRPC API on each node
+# immediately after the RPC port is up.  This advances the FSM to RUNNING so
+# legacy.Server.Start() unblocks and P2P connections can be established.
+echo "==> unblocking Teranode FSM on all three nodes (RUN event)"
+for ctr in compose-teranode-1-1 compose-teranode-2-1 compose-teranode-3-1; do
+    # If FSM is already in RUNNING/CATCHINGBLOCKS, SendFSMEvent returns an error.
+    # In that case query the current state instead.
+    out=$(docker exec "$ctr" grpcurl -plaintext \
+        -d '{"event": 1}' localhost:8087 \
+        blockchain_api.BlockchainAPI.SendFSMEvent 2>&1) || true
+    state=$(echo "$out" | grep -o '"state":"[^"]*"' || \
+            docker exec "$ctr" grpcurl -plaintext localhost:8087 \
+                blockchain_api.BlockchainAPI.GetFSMCurrentState 2>/dev/null | grep -o '"state":"[^"]*"' || \
+            echo '"state":"unknown"')
+    echo "    $ctr: $state"
+done
 
 echo "==> generating mining address (svnode-1 wallet)"
 ADDR=$(rpc_call 18332 "getnewaddress" '[]' | jq -r '.result')

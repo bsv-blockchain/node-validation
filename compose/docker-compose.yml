@@ -27,12 +27,18 @@ services:
     networks: [tng-net]
 
   aerospike:
-    image: aerospike/aerospike-server:6.4
+    # Aerospike Community Edition caps at 2 namespaces; we need 3 (one per Teranode)
+    # because secondary index names are unique per-namespace and cannot be shared.
+    # Enterprise Edition 8.0 ships with a trial feature key and supports many namespaces.
+    image: aerospike/aerospike-server-enterprise:8.0
     ports:
       - "127.0.0.1:13000:3000"
     volumes:
-      - ./aerospike/aerospike.conf:/etc/aerospike/aerospike.conf
-    command: ["--config-file", "/etc/aerospike/aerospike.conf"]
+      # Mount the 3-namespace config to a custom path so it is not overwritten
+      # by the container entrypoint (which only regenerates /etc/aerospike/aerospike.conf
+      # when aerospike.template.conf is present, but we avoid that path to be safe).
+      - ./aerospike/aerospike.docker.conf:/etc/aerospike/aerospike.docker.conf:ro
+    command: ["--config-file", "/etc/aerospike/aerospike.docker.conf"]
     networks: [tng-net]
 
   postgres:
@@ -127,11 +133,11 @@ services:
       - "127.0.0.1:18331:28332"   # ZMQ block (was 28332, collided with svnode-2 RPC)
       - "127.0.0.1:18330:28333"   # ZMQ tx (was 28333, out of suite)
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf
-      - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf.local
+      # bitcoin-sv 1.1.0 does not support includeconf; mount the complete per-node
+      # conf directly as bitcoin.conf so addnode/ZMQ/wallet settings are applied.
+      - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
-              -includeconf=/data/bitcoin.conf.local
     networks: [tng-net]
 
   svnode-2:
@@ -140,11 +146,9 @@ services:
       - "127.0.0.1:28332:18332"
       - "127.0.0.1:24444:18444"
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf
-      - ./svnode/bitcoin.conf.svnode-2:/data/bitcoin.conf.local
+      - ./svnode/bitcoin.conf.svnode-2:/data/bitcoin.conf
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
-              -includeconf=/data/bitcoin.conf.local
     networks: [tng-net]
 
   svnode-3:
@@ -153,11 +157,9 @@ services:
       - "127.0.0.1:38332:18332"
       - "127.0.0.1:34444:18444"
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf
-      - ./svnode/bitcoin.conf.svnode-3:/data/bitcoin.conf.local
+      - ./svnode/bitcoin.conf.svnode-3:/data/bitcoin.conf
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
-              -includeconf=/data/bitcoin.conf.local
     networks: [tng-net]
 
 networks:
