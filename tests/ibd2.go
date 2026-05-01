@@ -61,13 +61,22 @@ func RunIBD2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		fmt.Sprintf("loaded=%d", len(fixtures)),
 	))
 
+	// The acceptance check is "match on accept/reject decisions", not
+	// "match on rejection reason". Different implementations legitimately
+	// reject the same invalid tx for different reasons (validation order
+	// differs between Teranode and bitcoin-sv), and that divergence is
+	// expected — what matters is that both nodes agree on whether the tx
+	// is valid. Categories are still recorded as observations so reviewers
+	// can audit the divergence.
 	matched := 0
 	mismatches := []string{}
 	for _, f := range fixtures {
 		_, terr := env.Teranode.RPC.SendRawTransaction(ctx, f.HexTx)
 		_, serr := env.SVNode.RPC.SendRawTransaction(ctx, f.HexTx)
-		isMatch, tCat, sCat := compare.CompareCategories(terr, serr)
-		if isMatch {
+		_, tCat, sCat := compare.CompareCategories(terr, serr)
+		bothAccepted := terr == nil && serr == nil
+		bothRejected := terr != nil && serr != nil
+		if bothAccepted || bothRejected {
 			matched++
 		} else {
 			mismatches = append(mismatches,
