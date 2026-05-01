@@ -187,6 +187,15 @@ func bootstrapConfirmed(ctx context.Context, env *testrunner.Env, satoshis uint6
 		if err := waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], 30*time.Second); err != nil {
 			return txgen.UTXO{}, fmt.Errorf("wait for teranode to receive bootstrap block: %w", err)
 		}
+		// Brief settling delay: after the tip advances, Teranode's UTXO store
+		// may still be writing the block's outputs. Submitting a child tx
+		// during that window has been observed to fail with Aerospike
+		// FAIL_FORBIDDEN (lock held by the in-flight UTXO write).
+		select {
+		case <-ctx.Done():
+			return txgen.UTXO{}, ctx.Err()
+		case <-time.After(2 * time.Second):
+		}
 	}
 	return utxo, nil
 }

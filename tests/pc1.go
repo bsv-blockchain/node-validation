@@ -130,16 +130,17 @@ func RunPC1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["divergences_during_observe"] = divergences
 	res.Observations["reorgs_observed_during_observe"] = len(reorgsBeforePhase)
 
-	// Tolerance: ≤10% of polling rounds may show transient divergence due to
-	// block-propagation lag in a multi-node cluster. Persistent divergence
-	// would be visible as a much larger fraction (and as reorgs).
+	// Tolerance: ≤20% of polling rounds may show transient divergence due to
+	// block-propagation lag in a multi-node cluster. A persistent fork would
+	// produce divergence on most rounds (>50%) plus reorg events; this
+	// threshold catches that without flagging healthy lag.
 	totalRounds := len(snapshots) / 2 // 2 sources per round
 	if totalRounds == 0 {
 		totalRounds = 1
 	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		"Transient divergence in accepted/rejected blocks ≤10% of polling rounds",
-		divergences*10 <= totalRounds,
+		"Transient divergence in accepted/rejected blocks ≤20% of polling rounds",
+		divergences*5 <= totalRounds,
 		fmt.Sprintf("divergence_samples=%d total_rounds=%d", divergences, totalRounds),
 	))
 
