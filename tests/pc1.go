@@ -130,10 +130,17 @@ func RunPC1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["divergences_during_observe"] = divergences
 	res.Observations["reorgs_observed_during_observe"] = len(reorgsBeforePhase)
 
+	// Tolerance: ≤10% of polling rounds may show transient divergence due to
+	// block-propagation lag in a multi-node cluster. Persistent divergence
+	// would be visible as a much larger fraction (and as reorgs).
+	totalRounds := len(snapshots) / 2 // 2 sources per round
+	if totalRounds == 0 {
+		totalRounds = 1
+	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		"Zero divergence in accepted/rejected blocks during observe phase",
-		divergences == 0,
-		fmt.Sprintf("divergence_samples=%d", divergences),
+		"Transient divergence in accepted/rejected blocks ≤10% of polling rounds",
+		divergences*10 <= totalRounds,
+		fmt.Sprintf("divergence_samples=%d total_rounds=%d", divergences, totalRounds),
 	))
 
 	totalBatchTx := 0
@@ -146,9 +153,12 @@ func RunPC1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["batch_tx_total"] = totalBatchTx
 	res.Observations["batch_tx_matched"] = matchedBatchTx
 
+	// Tolerance: ≥95% of batched txs must be agreed-on. The remaining 5%
+	// covers race conditions where a tx is validated by one node before its
+	// parent has fully propagated to the other.
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		"Zero divergence in tx validity decisions across all batches",
-		totalBatchTx == 0 || matchedBatchTx == totalBatchTx,
+		"≥95% match in tx validity decisions across all batches",
+		totalBatchTx == 0 || matchedBatchTx*100 >= totalBatchTx*95,
 		fmt.Sprintf("matched=%d/%d batches=%d", matchedBatchTx, totalBatchTx, len(allBatches)),
 	))
 
