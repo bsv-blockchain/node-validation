@@ -31,7 +31,7 @@ services:
     ports:
       - "127.0.0.1:13000:3000"
     volumes:
-      - ./aerospike/aerospike.conf:/etc/aerospike/aerospike.conf:ro
+      - ./aerospike/aerospike.conf:/etc/aerospike/aerospike.conf
     command: ["--config-file", "/etc/aerospike/aerospike.conf"]
     networks: [tng-net]
 
@@ -45,13 +45,21 @@ services:
       POSTGRES_DB: postgres
     volumes:
       - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     networks: [tng-net]
 
   # ---------- Teranode ×3 ----------
 
   teranode-1:
     image: ghcr.io/bsv-blockchain/teranode:v0.15.0-beta-2
-    depends_on: [aerospike, postgres, kafka]
+    depends_on:
+      aerospike: {condition: service_started}
+      kafka:     {condition: service_started}
+      postgres:  {condition: service_healthy}
     ports:
       - "127.0.0.1:19292:9292"
       - "127.0.0.1:18090:8090"
@@ -59,9 +67,9 @@ services:
       - "127.0.0.1:18000:8000"
       - "127.0.0.1:18444:18444"
       - "127.0.0.1:19905:9905"
-      - "127.0.0.1:19906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
+      - "127.0.0.1:19906:9906"
     environment:
-      SETTINGS_CONTEXT: docker.tng
+      SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode1
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
@@ -69,7 +77,10 @@ services:
 
   teranode-2:
     image: ghcr.io/bsv-blockchain/teranode:v0.15.0-beta-2
-    depends_on: [aerospike, postgres, kafka]
+    depends_on:
+      aerospike: {condition: service_started}
+      kafka:     {condition: service_started}
+      postgres:  {condition: service_healthy}
     ports:
       - "127.0.0.1:29292:9292"
       - "127.0.0.1:28090:8090"
@@ -77,9 +88,9 @@ services:
       - "127.0.0.1:28000:8000"
       - "127.0.0.1:28444:18444"
       - "127.0.0.1:29905:9905"
-      - "127.0.0.1:29906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
+      - "127.0.0.1:29906:9906"
     environment:
-      SETTINGS_CONTEXT: docker.tng
+      SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode2
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
@@ -87,7 +98,10 @@ services:
 
   teranode-3:
     image: ghcr.io/bsv-blockchain/teranode:v0.15.0-beta-2
-    depends_on: [aerospike, postgres, kafka]
+    depends_on:
+      aerospike: {condition: service_started}
+      kafka:     {condition: service_started}
+      postgres:  {condition: service_healthy}
     ports:
       - "127.0.0.1:39292:9292"
       - "127.0.0.1:38090:8090"
@@ -95,9 +109,9 @@ services:
       - "127.0.0.1:38000:8000"
       - "127.0.0.1:38444:18444"
       - "127.0.0.1:39905:9905"
-      - "127.0.0.1:39906:9906"   # NEW: P2P HTTP / /p2p-ws (NEW-FR9)
+      - "127.0.0.1:39906:9906"
     environment:
-      SETTINGS_CONTEXT: docker.tng
+      SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode3
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
@@ -113,8 +127,8 @@ services:
       - "127.0.0.1:18331:28332"   # ZMQ block (was 28332, collided with svnode-2 RPC)
       - "127.0.0.1:18330:28333"   # ZMQ tx (was 28333, out of suite)
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf:ro
-      - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf.local:ro
+      - ./svnode/bitcoin.conf:/data/bitcoin.conf
+      - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf.local
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
               -includeconf=/data/bitcoin.conf.local
@@ -126,8 +140,8 @@ services:
       - "127.0.0.1:28332:18332"
       - "127.0.0.1:24444:18444"
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf:ro
-      - ./svnode/bitcoin.conf.svnode-2:/data/bitcoin.conf.local:ro
+      - ./svnode/bitcoin.conf:/data/bitcoin.conf
+      - ./svnode/bitcoin.conf.svnode-2:/data/bitcoin.conf.local
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
               -includeconf=/data/bitcoin.conf.local
@@ -139,8 +153,8 @@ services:
       - "127.0.0.1:38332:18332"
       - "127.0.0.1:34444:18444"
     volumes:
-      - ./svnode/bitcoin.conf:/data/bitcoin.conf:ro
-      - ./svnode/bitcoin.conf.svnode-3:/data/bitcoin.conf.local:ro
+      - ./svnode/bitcoin.conf:/data/bitcoin.conf
+      - ./svnode/bitcoin.conf.svnode-3:/data/bitcoin.conf.local
     command: >
       bitcoind -datadir=/data -conf=/data/bitcoin.conf
               -includeconf=/data/bitcoin.conf.local

@@ -22,9 +22,9 @@ svnode:
   zmq_tx_url: "tcp://localhost:18330"
 
 funding:
-  # Public test vector WIF (privkey=1, mainnet form). Bootstrap derives
+  # Public test vector WIF (privkey=1, regtest/testnet form). Bootstrap derives
   # the regtest address via cmd/derive-address. Never use for real funds.
-  wif: "KwDiBf89QgGbjEhKnhXJuH7LrciVrZi3qYjgd9M7rFU73sVHnoWn"
+  wif: "cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA"
   min_balance_satoshis: 100000000
 
 durations:
