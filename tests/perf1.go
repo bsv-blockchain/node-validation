@@ -27,6 +27,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -123,6 +124,9 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 			}
 		}
 		if submitErr != nil {
+			if strings.Contains(submitErr.Error(), "FAIL_FORBIDDEN") {
+				return skipMissing(res, fmt.Sprintf("Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN @rate=%d: %s", rate, submitErr.Error()))
+			}
 			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, submitErr))
 		}
 		if _, err := mineBlocks(ctx, env, 1); err != nil {

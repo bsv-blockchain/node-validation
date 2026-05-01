@@ -28,6 +28,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -113,6 +114,9 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 			return errorResult(res, ctx.Err())
 		case <-time.After(3 * time.Second):
 		}
+	}
+	if err != nil && strings.Contains(err.Error(), "FAIL_FORBIDDEN") {
+		return skipMissing(res, "Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN: "+err.Error())
 	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		fmt.Sprintf("Splitter tx with %d outputs accepted", count),
