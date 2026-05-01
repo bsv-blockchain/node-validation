@@ -126,7 +126,26 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		return errorResult(res, err)
 	}
 
-	// (4) Mine a block.
+	// (4) Wait for the 3 submitted txs to propagate from Teranode into
+	// svnode-1's mempool, THEN mine. Without this delay svnode-1 may
+	// mine an empty block before the legacy P2P relay catches up.
+	if err := waitForMempoolEntries(ctx, env.SVNode.RPC, []string{
+		hex.EncodeToString(bres.TxID[:]),
+		hex.EncodeToString(bres2.TxID[:]),
+		hex.EncodeToString(bres3.TxID[:]),
+	}, 30*time.Second); err != nil {
+		// Don't fail the whole test — record as acceptance check.
+		res.AcceptanceChecks = append(res.AcceptanceChecks, fail(
+			"All 3 test txs propagated to svnode-1 mempool",
+			err.Error(),
+		))
+	} else {
+		res.AcceptanceChecks = append(res.AcceptanceChecks, ok(
+			"All 3 test txs propagated to svnode-1 mempool",
+			"observed via getrawmempool",
+		))
+	}
+
 	mined, err := mineBlocks(ctx, env, 1)
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		"Block mined via svnode-1",
@@ -263,6 +282,11 @@ func parseStandardBlock(blockBytes []byte) ([]string, error) {
 	count, n, err := readVarInt(body)
 	if err != nil {
 		return nil, fmt.Errorf("read tx count: %w", err)
+	}
+	// Sanity cap: a regtest block with > 10M txs is implausible and
+	// indicates a parse error or non-standard block format.
+	if count > 10_000_000 {
+		return nil, fmt.Errorf("tx count %d implausibly large; block format may differ", count)
 	}
 	body = body[n:]
 	out := make([]string, 0, count)

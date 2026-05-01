@@ -93,6 +93,42 @@ func errorResult(res testrunner.Result, err error) testrunner.Result {
 	return res
 }
 
+// waitForMempoolEntries polls rpc.GetRawMempool every 500ms until all
+// wantTxIDs are observed in the mempool, or the timeout passes.
+func waitForMempoolEntries(ctx context.Context, rpc mempoolReader, wantTxIDs []string, timeout time.Duration) error {
+	want := map[string]bool{}
+	for _, id := range wantTxIDs {
+		want[id] = true
+	}
+	deadline := time.Now().Add(timeout)
+	for time.Now().Before(deadline) {
+		mempool, err := rpc.GetRawMempool(ctx)
+		if err == nil {
+			seen := 0
+			present := map[string]bool{}
+			for _, id := range mempool {
+				if want[id] {
+					present[id] = true
+				}
+			}
+			for id := range want {
+				if present[id] {
+					seen++
+				}
+			}
+			if seen == len(want) {
+				return nil
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(500 * time.Millisecond):
+		}
+	}
+	return fmt.Errorf("only some of %d expected txs reached mempool within %v", len(wantTxIDs), timeout)
+}
+
 // deriveStatus computes Status from the acceptance checks. Any required
 // false → FAIL. All true → PASS. No checks → ERROR (unconfigured test).
 func deriveStatus(checks []testrunner.Check) testrunner.Status {
