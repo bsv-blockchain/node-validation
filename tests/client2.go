@@ -57,7 +57,7 @@ func RunCLIENT2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	funder := env.TxGen
 	builder := funder.Builder()
 	if funder.Balance() < 100_000_000 {
-		if _, err := funder.Bootstrap(ctx, 100_000_000); err != nil {
+		if _, err := bootstrapConfirmed(ctx, env, 100_000_000); err != nil {
 			return errorResult(res, fmt.Errorf("bootstrap: %w", err))
 		}
 		if _, err := mineBlocks(ctx, env, 1); err != nil {

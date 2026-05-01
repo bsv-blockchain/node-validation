@@ -96,7 +96,7 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		// Bootstrap + splitter for txCount UTXOs.
 		target := uint64(txCount) * 100_000 * 2
 		if funder.Balance() < target {
-			if _, err := funder.Bootstrap(ctx, target); err != nil {
+			if _, err := bootstrapConfirmed(ctx, env, target); err != nil {
 				return errorResult(res, fmt.Errorf("bootstrap @rate %d: %w", rate, err))
 			}
 			if _, err := mineBlocks(ctx, env, 1); err != nil {

@@ -72,7 +72,7 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 	// Bootstrap UTXO if needed.
 	if funder.Balance() < 100_000_000 {
-		if _, err := funder.Bootstrap(ctx, 100_000_000); err != nil {
+		if _, err := bootstrapConfirmed(ctx, env, 100_000_000); err != nil {
 			return errorResult(res, fmt.Errorf("bootstrap: %w", err))
 		}
 		// Mine to confirm.

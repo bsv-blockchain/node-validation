@@ -88,7 +88,7 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	const splitterSatsPerOutput uint64 = 100_000
 	target := uint64(count) * splitterSatsPerOutput * 2 // 2x headroom for fees
 	if funder.Balance() < target {
-		if _, err := funder.Bootstrap(ctx, target); err != nil {
+		if _, err := bootstrapConfirmed(ctx, env, target); err != nil {
 			return errorResult(res, fmt.Errorf("bootstrap: %w", err))
 		}
 		if _, err := mineBlocks(ctx, env, 1); err != nil {

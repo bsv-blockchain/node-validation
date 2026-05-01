@@ -16,6 +16,7 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/observer"
 	"github.com/bsv-blockchain/node-validation/internal/teranode"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
+	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
 // mempoolReader is satisfied by both *teranode.RPCClient and *svnode.RPCClient,
@@ -159,6 +160,35 @@ func mineBlocks(ctx context.Context, env *testrunner.Env, n int) ([]string, erro
 		return nil, fmt.Errorf("generatetoaddress: %w", err)
 	}
 	return hashes, nil
+}
+
+// bootstrapConfirmed wraps Funder.Bootstrap with mining + propagation
+// so that the returned UTXO's parent tx is visible to Teranode.
+//
+// Procedure:
+//  1. Call funder.Bootstrap(ctx, satoshis) → creates funding tx in svnode-1 mempool.
+//  2. Mine 1 block on svnode-1 to confirm the funding tx.
+//  3. Wait for Teranode-1's tip to reach that mined block (max 30s).
+//
+// On any failure, returns a zero UTXO and the error.
+func bootstrapConfirmed(ctx context.Context, env *testrunner.Env, satoshis uint64) (txgen.UTXO, error) {
+	utxo, err := env.TxGen.Bootstrap(ctx, satoshis)
+	if err != nil {
+		return txgen.UTXO{}, fmt.Errorf("bootstrap: %w", err)
+	}
+	hashes, err := mineBlocks(ctx, env, 1)
+	if err != nil {
+		return txgen.UTXO{}, fmt.Errorf("mine confirmation block: %w", err)
+	}
+	if len(hashes) != 1 {
+		return txgen.UTXO{}, fmt.Errorf("expected 1 mined hash, got %d", len(hashes))
+	}
+	if env.Teranode != nil && env.Teranode.RPC != nil {
+		if err := waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], 30*time.Second); err != nil {
+			return txgen.UTXO{}, fmt.Errorf("wait for teranode to receive bootstrap block: %w", err)
+		}
+	}
+	return utxo, nil
 }
 
 // waitForTeranodeTip polls Teranode RPC until its chain tip matches want
