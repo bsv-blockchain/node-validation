@@ -171,7 +171,7 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	}
 
 	// (5) Fetch the block, parse, verify our test txs are present.
-	blockBytes, err := env.Teranode.REST.GetBlockBytes(ctx, blockHash)
+	blockBytes, err := env.Teranode.REST.GetBlockLegacyBytes(ctx, blockHash)
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		"Block bytes fetched via Teranode REST",
 		err == nil && len(blockBytes) > 0,

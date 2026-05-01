@@ -130,7 +130,7 @@ func RunNEWFR7(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		return res
 	}
 
-	blockBytes, err := env.Teranode.REST.GetBlockBytes(ctx, mined[0])
+	blockBytes, err := env.Teranode.REST.GetBlockLegacyBytes(ctx, mined[0])
 	if err != nil {
 		return errorResult(res, fmt.Errorf("get block bytes: %w", err))
 	}

@@ -93,6 +93,17 @@ func (c *RESTClient) GetTxJSON(ctx context.Context, hash string) (json.RawMessag
 func (c *RESTClient) GetBlockBytes(ctx context.Context, hash string) ([]byte, error) {
 	return c.get(ctx, "block/"+hash)
 }
+
+// GetBlockLegacyBytes fetches a block in the pre-subtree (standard BSV) wire
+// format used by tx-list parsers. The default /block/{hash} endpoint returns
+// Teranode's subtree serialization, which standard BSV block parsers cannot
+// decode. /block_legacy/{hash} returns header + VarInt tx_count + concatenated
+// standard tx bytes, suitable for libsv/go-bt parsing. Per SP2 discovery §3,
+// this endpoint is documented for eventual removal but remains available in
+// v0.15.0-beta-2.
+func (c *RESTClient) GetBlockLegacyBytes(ctx context.Context, hash string) ([]byte, error) {
+	return c.get(ctx, "block_legacy/"+hash)
+}
 func (c *RESTClient) GetBlockJSON(ctx context.Context, hash string) (json.RawMessage, error) {
 	b, err := c.get(ctx, "block/"+hash+"/json")
 	return json.RawMessage(b), err
