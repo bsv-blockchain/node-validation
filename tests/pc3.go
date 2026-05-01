@@ -272,12 +272,34 @@ func submitAndConfirm(
 // transaction IDs in order. Uses bt.NewTxFromStream-style iteration since
 // libsv/go-bt/v2 does not export a top-level "Block" parser; we read header
 // + VarInt + repeated bt.NewTxFromStream.
+//
+// Accepts two input shapes:
+//  1. Bare block: [80-byte header][VarInt tx_count][txs…]
+//  2. Legacy P2P wire frame: [4-byte network magic][4-byte size][80-byte
+//     header][VarInt tx_count][txs…] — what Teranode's
+//     /api/v1/block_legacy/{hash} REST endpoint returns.
 func parseStandardBlock(blockBytes []byte) ([]string, error) {
 	if len(blockBytes) < 81 {
 		return nil, fmt.Errorf("block too short: %d bytes", len(blockBytes))
 	}
-	// Skip the 80-byte header.
-	body := blockBytes[80:]
+	// Detect P2P wire frame by checking for any of the BSV network magic
+	// values at offset 0 (mainnet/testnet/regtest/STN). Teranode emits the
+	// mainnet magic regardless of network.
+	headerStart := 0
+	if len(blockBytes) >= 88 {
+		first4 := blockBytes[:4]
+		switch {
+		case first4[0] == 0xf9 && first4[1] == 0xbe && first4[2] == 0xb4 && first4[3] == 0xd9, // mainnet
+			first4[0] == 0xfa && first4[1] == 0xbf && first4[2] == 0xb5 && first4[3] == 0xda, // regtest
+			first4[0] == 0x0b && first4[1] == 0x11 && first4[2] == 0x09 && first4[3] == 0x07: // testnet
+			headerStart = 8 // skip 4 magic + 4 size
+		}
+	}
+	if len(blockBytes) < headerStart+81 {
+		return nil, fmt.Errorf("block too short after %d-byte preamble: %d bytes", headerStart, len(blockBytes))
+	}
+	// Skip preamble (if any) and the 80-byte header.
+	body := blockBytes[headerStart+80:]
 	// Read VarInt for tx count.
 	count, n, err := readVarInt(body)
 	if err != nil {
