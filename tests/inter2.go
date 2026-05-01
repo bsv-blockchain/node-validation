@@ -98,7 +98,22 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	if err != nil {
 		return errorResult(res, fmt.Errorf("BuildSplitter: %w", err))
 	}
-	splitterTxID, err := env.Teranode.RPC.SendRawTransaction(ctx, splitter.HexTx)
+	// Retry with backoff: Teranode/Aerospike intermittently rejects high-
+	// fan-out splitters with FAIL_FORBIDDEN ('failed to acquire lock') when
+	// a previous UTXO write hasn't fully released its lock. Up to 3 attempts
+	// at 3s spacing has been sufficient in observed runs.
+	var splitterTxID string
+	for attempt := 0; attempt < 3; attempt++ {
+		splitterTxID, err = env.Teranode.RPC.SendRawTransaction(ctx, splitter.HexTx)
+		if err == nil {
+			break
+		}
+		select {
+		case <-ctx.Done():
+			return errorResult(res, ctx.Err())
+		case <-time.After(3 * time.Second):
+		}
+	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		fmt.Sprintf("Splitter tx with %d outputs accepted", count),
 		err == nil && splitterTxID != "",

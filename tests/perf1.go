@@ -108,8 +108,22 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		if err != nil {
 			return errorResult(res, fmt.Errorf("splitter @rate %d: %w", rate, err))
 		}
-		if _, err := env.Teranode.RPC.SendRawTransaction(ctx, splitter.HexTx); err != nil {
-			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, err))
+		// Retry with backoff: Teranode/Aerospike intermittently rejects
+		// high-fan-out splitters with FAIL_FORBIDDEN. Up to 3 attempts at 3s
+		// spacing has been sufficient in observed runs.
+		var submitErr error
+		for attempt := 0; attempt < 3; attempt++ {
+			if _, submitErr = env.Teranode.RPC.SendRawTransaction(ctx, splitter.HexTx); submitErr == nil {
+				break
+			}
+			select {
+			case <-ctx.Done():
+				return errorResult(res, ctx.Err())
+			case <-time.After(3 * time.Second):
+			}
+		}
+		if submitErr != nil {
+			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, submitErr))
 		}
 		if _, err := mineBlocks(ctx, env, 1); err != nil {
 			return errorResult(res, err)

@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
@@ -72,6 +73,10 @@ func RunNEWFR11(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		}
 		chainTxIDs = append(chainTxIDs, hex.EncodeToString(c.TxID[:]))
 	}
+
+	// Teranode registers txs asynchronously between RPC accept and visibility
+	// in getrawmempool — wait briefly for all chain txs to appear.
+	_ = waitForMempoolEntries(ctx, env.Teranode.RPC, chainTxIDs, 10*time.Second)
 
 	// (1) getrawmempool.
 	mempool, err := env.Teranode.RPC.GetRawMempool(ctx)
