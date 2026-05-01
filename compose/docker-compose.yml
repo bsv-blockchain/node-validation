@@ -1,4 +1,5 @@
 # compose/docker-compose.yml
+name: node-validation
 services:
 
   # ---------- shared infra ----------

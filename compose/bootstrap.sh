@@ -51,7 +51,7 @@ wait_for "teranode-3 RPC" 39292 "getblockchaininfo" 30
 # immediately after the RPC port is up.  This advances the FSM to RUNNING so
 # legacy.Server.Start() unblocks and P2P connections can be established.
 echo "==> unblocking Teranode FSM on all three nodes (RUN event)"
-for ctr in compose-teranode-1-1 compose-teranode-2-1 compose-teranode-3-1; do
+for ctr in node-validation-teranode-1-1 node-validation-teranode-2-1 node-validation-teranode-3-1; do
     # If FSM is already in RUNNING/CATCHINGBLOCKS, SendFSMEvent returns an error.
     # In that case query the current state instead.
     out=$(docker exec "$ctr" grpcurl -plaintext \
