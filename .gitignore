@@ -6,3 +6,5 @@ coverage.html
 config.yaml
 *.test
 .DS_Store
+.claude/
+.idea/
