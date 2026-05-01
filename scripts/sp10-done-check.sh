@@ -50,9 +50,16 @@ test -s docs/operator-guide-overrides-example.yaml
 if [ "${SP10_LIVE:-0}" = "1" ]; then
     echo "==> Live: full --short run"
     make compose-up
+    overrides_arg=""
+    if [ -n "${SP10_OVERRIDES:-}" ]; then
+        overrides_arg="--reviewer-overrides ${SP10_OVERRIDES}"
+        echo "    using overrides: ${SP10_OVERRIDES}"
+    else
+        echo "    no overrides supplied (set SP10_OVERRIDES=path); verdict will likely be INCOMPLETE"
+    fi
     ./bin/teranode-acceptance --short --test-timeout 90m \
         --config config.docker.yaml \
-        --reviewer-overrides docs/operator-guide-overrides-example.yaml || true
+        $overrides_arg || true
     test -s report.json
     test -s report.html
     decision=$(jq -r '.verdict.decision' report.json)

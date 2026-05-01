@@ -15,6 +15,15 @@ make compose-down       # tears down (volumes wiped)
 
 Then read `report.html` in your browser and `report.json` for machine-readable output.
 
+The first run will exit with `INCOMPLETE` (exit code 3) — five documentation/contractual rows (IBD-1, FR-4, NFR-1, NFR-8, NFR-9) require human-supplied evidence. To produce a `GO` verdict, supply a reviewer-overrides YAML on the next run:
+
+```bash
+./bin/teranode-acceptance --short --config config.docker.yaml \
+    --reviewer-overrides ~/your-overrides.yaml
+```
+
+See `docs/operator-guide.md` §5 for the YAML schema.
+
 ## Sub-projects
 
 This project was developed in 11 sub-projects, each independently tagged. All complete:
@@ -110,7 +119,7 @@ The override file is recorded into the JSON report under `run.reviewer_overrides
 → Verify port 9906 is exposed on each Teranode in `compose/docker-compose.yml` (host 19906/29906/39906).
 
 **`PERF-1` higher rates fail with errors**
-→ Local docker can't sustain 1000 TPS. Reduce `Limits.PERF1MaxTPS` in `config.docker.yaml` to 250.
+→ Local docker can't sustain 1000 TPS. Reduce `limits.perf1_max_tps` in `config.docker.yaml` to 250.
 
 **`CLIENT-1` / `CLIENT-3` notification client errors**
 → The Centrifuge WebSocket is on `:8090/connection/websocket` (not `:8892`). Per SP2 discovery, the `asset_centrifugeListenAddress` setting is misleading.
