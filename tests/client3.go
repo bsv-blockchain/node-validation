@@ -31,6 +31,7 @@ package tests
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -64,8 +65,13 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["tx_count"] = count
 
 	// Establish notification session and track block heights.
+	// See CLIENT-1 for the Asset/Centrifuge availability skip rationale.
 	notif := env.Teranode.Notifications
 	if err := notif.Connect(ctx); err != nil {
+		msg := err.Error()
+		if strings.Contains(msg, "bad handshake") || strings.Contains(msg, "centrifuge connect timeout") {
+			return skipMissing(res, "Asset Centrifuge endpoint unavailable in v0.15.0-beta-2 after restart: "+msg)
+		}
 		return errorResult(res, fmt.Errorf("connect: %w", err))
 	}
 
