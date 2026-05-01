@@ -377,14 +377,16 @@ type reorgResult struct {
 
 // induceReorg manually creates competing chains and verifies convergence.
 //
-// Procedure (per SP9 spec §3.1):
-//  1. Capture baseline (svnode-1 best-block-hash).
-//  2. Mine 1 block on svnode-1 → B1.
-//  3. Wait for B1 to propagate to teranode-1.
-//  4. invalidateblock(B1) on teranode-1 (rolls teranode-1 back).
-//  5. generatetoaddress 2 blocks on teranode-1 → T1, T2 (longer chain).
-//  6. Wait for svnode-1 to reorg to T2.
-//  7. Return success/failure.
+// Procedure (single-svnode-with-wallet, regtest):
+//  1. Capture baseline (svnode-1 best-block-hash = B0).
+//  2. Mine 2 blocks on svnode-1 → B1, B2 at heights H+1, H+2.
+//  3. Wait for B2 to propagate to teranode-1.
+//  4. invalidateblock(B1) on svnode-1 — rolls svnode-1 back to B0 and
+//     permanently rejects B1/B2 from peers.
+//  5. Mine 3 blocks on svnode-1 → C1, C2, C3 at heights H+1, H+2, H+3.
+//     This competing fork is longer than B2; svnode-1 broadcasts it to
+//     peers, which (lacking the invalidation) prefer the longer chain.
+//  6. Wait for teranode-1 to reorg from B2 to C3.
 //
 // Returns reorgResult with details. If any step fails, sets Err and returns.
 func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnapshot) reorgResult {
@@ -403,62 +405,48 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 	}
 	res.BaselineHash = baseline
 
-	// 2. Mine 1 block on svnode-1.
+	// 2. Mine 2 blocks on svnode-1 → B1, B2.
 	addr, err := env.SVNode.RPC.GetNewAddress(ctx)
 	if err != nil {
 		res.Err = fmt.Errorf("getnewaddress: %w", err)
 		return res
 	}
-	b1Hashes, err := env.SVNode.RPC.GenerateToAddress(ctx, 1, addr)
-	if err != nil || len(b1Hashes) != 1 {
-		res.Err = fmt.Errorf("mine B1: err=%v hashes=%v", err, b1Hashes)
+	bHashes, err := env.SVNode.RPC.GenerateToAddress(ctx, 2, addr)
+	if err != nil || len(bHashes) != 2 {
+		res.Err = fmt.Errorf("mine B1+B2: err=%v hashes=%v", err, bHashes)
 		return res
 	}
-	b1 := b1Hashes[0]
+	b1, b2 := bHashes[0], bHashes[1]
 
-	// 3. Wait for propagation: poll teranode-1's tip until == b1.
-	if err := waitForTeranodeTip(ctx, env.Teranode.RPC, b1, 30*time.Second); err != nil {
-		res.Err = fmt.Errorf("B1 propagation: %w", err)
+	// 3. Wait for propagation: poll teranode-1's tip until == B2.
+	if err := waitForTeranodeTip(ctx, env.Teranode.RPC, b2, 30*time.Second); err != nil {
+		res.Err = fmt.Errorf("B2 propagation: %w", err)
 		return res
 	}
 
-	// 4. invalidateblock(B1) on teranode-1, with one retry after 2s
-	// per SP9 spec §7 risk B (transient busy/mining races).
+	// 4. invalidateblock(B1) on svnode-1 — rolls svnode-1 back, blocks reaccept.
+	// Teranode does not need to invalidate; it'll reorg organically when the
+	// competing fork outpaces B2 in length.
 	var dummy json.RawMessage
-	invalErr := env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy)
-	if invalErr != nil {
-		select {
-		case <-ctx.Done():
-			res.Err = ctx.Err()
-			return res
-		case <-time.After(2 * time.Second):
-		}
-		invalErr = env.Teranode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy)
-	}
-	if invalErr != nil {
-		res.Err = fmt.Errorf("invalidateblock B1 on teranode-1 (after retry): %w", invalErr)
+	if err := env.SVNode.RPC.Call(ctx, "invalidateblock", []any{b1}, &dummy); err != nil {
+		res.Err = fmt.Errorf("invalidateblock B1 on svnode-1: %w", err)
 		return res
 	}
 
-	// 5. generatetoaddress 2 blocks on teranode-1.
-	teranodeAddr := env.TxGen.Address()
-	var teranodeMined []string
-	if err := env.Teranode.RPC.Call(ctx, "generatetoaddress", []any{2, teranodeAddr}, &teranodeMined); err != nil {
-		res.Err = fmt.Errorf("generatetoaddress on teranode-1: %w", err)
+	// 5. Mine 3 blocks on svnode-1 → C1, C2, C3 (longer fork than B2).
+	cHashes, err := env.SVNode.RPC.GenerateToAddress(ctx, 3, addr)
+	if err != nil || len(cHashes) != 3 {
+		res.Err = fmt.Errorf("mine C1..C3: err=%v hashes=%v", err, cHashes)
 		return res
 	}
-	if len(teranodeMined) != 2 {
-		res.Err = fmt.Errorf("teranode-1 mined %d blocks, want 2", len(teranodeMined))
-		return res
-	}
-	t2 := teranodeMined[1]
-	res.WinnerHash = t2
+	c3 := cHashes[2]
+	res.WinnerHash = c3
 
-	// 6. Wait for svnode-1 to reorg to T2.
-	deadline := time.Now().Add(30 * time.Second)
+	// 6. Wait for teranode-1 to reorg from B2 to C3.
+	deadline := time.Now().Add(60 * time.Second)
 	for time.Now().Before(deadline) {
-		current, err := env.SVNode.RPC.GetBestBlockHash(ctx)
-		if err == nil && current == t2 {
+		current, err := env.Teranode.RPC.GetBestBlockHash(ctx)
+		if err == nil && current == c3 {
 			res.ConvergedAt = time.Now()
 			res.Reorged = true
 			return res
@@ -470,6 +458,6 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 		case <-time.After(500 * time.Millisecond):
 		}
 	}
-	res.Err = fmt.Errorf("svnode-1 did not reorg to T2=%s within 30s", t2)
+	res.Err = fmt.Errorf("teranode-1 did not reorg to C3=%s within 60s", c3)
 	return res
 }
