@@ -47,9 +47,9 @@ func RunNEWFR9(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	}
 	defer func() { res.Duration = env.Now().Sub(res.StartedAt) }()
 
-	if env.Teranode == nil || env.Teranode.RPC == nil ||
+	if env.Teranode == nil || env.Teranode.RPC == nil || env.Teranode.REST == nil ||
 		env.Teranode.P2PWS == nil || env.TxGen == nil || env.SVNode == nil {
-		return skipMissing(res, "Teranode RPC, P2PWS, TxGen, or SVNode not configured")
+		return skipMissing(res, "Teranode RPC, REST, P2PWS, TxGen, or SVNode not configured")
 	}
 
 	if err := env.Teranode.P2PWS.Connect(ctx); err != nil {
