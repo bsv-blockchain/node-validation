@@ -12,6 +12,7 @@ type RejectionCategory string
 
 const (
 	CategoryAccepted      RejectionCategory = "ACCEPTED"
+	CategoryAlreadyKnown  RejectionCategory = "ALREADY_KNOWN"
 	CategoryUTXOSpent     RejectionCategory = "UTXO_SPENT"
 	CategoryUTXOMissing   RejectionCategory = "UTXO_MISSING"
 	CategoryScriptFailure RejectionCategory = "SCRIPT_FAILURE"
@@ -75,7 +76,7 @@ func CategorizeSVNode(err error) RejectionCategory {
 		case -26:
 			return categorizeRejectionMessage(rpcErr.Message)
 		case -27:
-			return CategoryConflicting // tx already in chain / already in mempool
+			return CategoryAlreadyKnown // tx already in chain / already in mempool (duplicate)
 		}
 	}
 	return CategoryRPCError
@@ -108,11 +109,16 @@ func categorizeRejectionMessage(msg string) RejectionCategory {
 	return CategoryUnknown
 }
 
-// CompareCategories returns matched=true iff both backends produced the
-// same canonical category.
+// CompareCategories returns matched=true when both backends produced the same
+// canonical category, or when the pair represents compatible "tx already
+// processed" semantics (ACCEPTED on one side, ALREADY_KNOWN on the other).
+// The latter arises during sequential submission when P2P relay delivers the
+// tx to the second backend before the RPC call arrives.
 func CompareCategories(teranodeErr, svnodeErr error) (matched bool, teranodeCat, svnodeCat RejectionCategory) {
 	teranodeCat = CategorizeTeranode(teranodeErr)
 	svnodeCat = CategorizeSVNode(svnodeErr)
-	matched = teranodeCat == svnodeCat
+	matched = teranodeCat == svnodeCat ||
+		(teranodeCat == CategoryAccepted && svnodeCat == CategoryAlreadyKnown) ||
+		(teranodeCat == CategoryAlreadyKnown && svnodeCat == CategoryAccepted)
 	return
 }
