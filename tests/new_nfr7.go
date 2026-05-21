@@ -66,7 +66,10 @@ func RunNEWNFR7(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	// the loop never reaches the anchor block.
 	anchorHeight := int64(info.Blocks) - int64(iterations) - 10
 	if anchorHeight < 1 {
-		anchorHeight = 1
+		return skipMissing(res, fmt.Sprintf(
+			"chain too short for determinism test: need at least %d blocks, have %d",
+			int64(iterations)+11, info.Blocks,
+		))
 	}
 	var anchorHash string
 	if err := env.Teranode.RPC.Call(ctx, "getblockhash", []any{anchorHeight}, &anchorHash); err != nil {

@@ -26,6 +26,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bsv-blockchain/node-validation/internal/matrix"
@@ -51,6 +52,9 @@ func RunNEWFR11(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	builder := funder.Builder()
 	if funder.Balance() < 100_000_000 {
 		if _, err := bootstrapConfirmed(ctx, env, 100_000_000); err != nil {
+			if strings.Contains(err.Error(), "FAIL_FORBIDDEN") {
+				return skipMissing(res, "bootstrap: Aerospike lock contention: "+err.Error())
+			}
 			return errorResult(res, err)
 		}
 		if _, err := mineBlocks(ctx, env, 1); err != nil {
