@@ -188,18 +188,18 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	groupSVOnly := txs[count/3 : 2*count/3]
 	groupBoth := txs[2*count/3:]
 
-	teranodeOnlyTxIDs := txidsOf(groupTeranodeOnly)
-	svOnlyTxIDs := txidsOf(groupSVOnly)
-
 	res.Observations["teranode_only_count"] = len(groupTeranodeOnly)
 	res.Observations["sv_only_count"] = len(groupSVOnly)
 	res.Observations["both_count"] = len(groupBoth)
 
 	// Concurrent submission with bounded parallelism.
-	submitGroup := func(grp []interTx, submit func(context.Context, string) (string, error)) (sent int) {
+	// Returns the subset of grp that was successfully submitted so the
+	// propagation denominator reflects submitted txs, not planned txs.
+	submitGroup := func(grp []interTx, submit func(context.Context, string) (string, error)) []interTx {
 		var wg sync.WaitGroup
 		sem := make(chan struct{}, 10)
 		var mu sync.Mutex
+		var submitted []interTx
 		for _, t := range grp {
 			wg.Add(1)
 			sem <- struct{}{}
@@ -208,17 +208,25 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 				defer func() { <-sem }()
 				if _, err := submit(ctx, tx.hex); err == nil {
 					mu.Lock()
-					sent++
+					submitted = append(submitted, tx)
 					mu.Unlock()
 				}
 			}(t)
 		}
 		wg.Wait()
-		return sent
+		return submitted
 	}
 
-	teranodeSent := submitGroup(groupTeranodeOnly, env.Teranode.RPC.SendRawTransaction)
-	svSent := submitGroup(groupSVOnly, env.SVNode.RPC.SendRawTransaction)
+	submittedTeranodeOnly := submitGroup(groupTeranodeOnly, env.Teranode.RPC.SendRawTransaction)
+	submittedSVOnly := submitGroup(groupSVOnly, env.SVNode.RPC.SendRawTransaction)
+	teranodeSent := len(submittedTeranodeOnly)
+	svSent := len(submittedSVOnly)
+
+	// Derive txid slices from successfully-submitted transactions only.
+	// Using the submitted subset as both poll target and denominator prevents
+	// local submission drops from inflating the apparent propagation deficit.
+	teranodeOnlyTxIDs := txidsOf(submittedTeranodeOnly)
+	svOnlyTxIDs := txidsOf(submittedSVOnly)
 
 	// "Both" group — submit to Teranode, then SV Node 1ms later.
 	var bothSent int
