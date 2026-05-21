@@ -62,8 +62,9 @@ func RunNEWNFR7(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	if err != nil {
 		return errorResult(res, fmt.Errorf("getblockchaininfo: %w", err))
 	}
-	// Anchor at height = max(1, tip - iterations - 10) so chain advance during
-	// the loop never reaches the anchor block.
+	// Anchor at tip - iterations - 10 to ensure the chain cannot advance past it
+	// during the test loop. Skip if the chain is too short to place that anchor
+	// at height ≥ 1 (requires at least iterations+11 blocks).
 	anchorHeight := int64(info.Blocks) - int64(iterations) - 10
 	if anchorHeight < 1 {
 		return skipMissing(res, fmt.Sprintf(

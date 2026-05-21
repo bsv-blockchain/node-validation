@@ -63,7 +63,7 @@ func RunNEWFR7(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	if funder.Balance() < 100_000_000 {
 		if _, err := bootstrapConfirmed(ctx, env, 100_000_000); err != nil {
 			if strings.Contains(err.Error(), "FAIL_FORBIDDEN") {
-				return skipMissing(res, "bootstrap: Aerospike lock contention: "+err.Error())
+				return skipMissing(res, "bootstrap: FAIL_FORBIDDEN: "+err.Error())
 			}
 			return errorResult(res, fmt.Errorf("bootstrap: %w", err))
 		}

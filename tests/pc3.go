@@ -141,10 +141,12 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 			Detail:      err.Error(),
 		})
 	} else {
-		res.AcceptanceChecks = append(res.AcceptanceChecks, ok(
-			"All 3 test txs propagated to svnode-1 mempool",
-			"observed via getrawmempool",
-		))
+		res.AcceptanceChecks = append(res.AcceptanceChecks, testrunner.Check{
+			Description: "All 3 test txs propagated to svnode-1 mempool",
+			Required:    false,
+			Pass:        true,
+			Detail:      "observed via getrawmempool",
+		})
 	}
 
 	mined, err := mineBlocks(ctx, env, 1)

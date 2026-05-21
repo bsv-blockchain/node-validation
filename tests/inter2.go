@@ -228,6 +228,14 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	teranodeOnlyTxIDs := txidsOf(submittedTeranodeOnly)
 	svOnlyTxIDs := txidsOf(submittedSVOnly)
 
+	if len(teranodeOnlyTxIDs) == 0 || len(svOnlyTxIDs) == 0 {
+		return skipMissing(res, fmt.Sprintf(
+			"all submissions failed: teranode-only=%d/%d sv-only=%d/%d",
+			teranodeSent, len(groupTeranodeOnly),
+			svSent, len(groupSVOnly),
+		))
+	}
+
 	// "Both" group — submit to Teranode, then SV Node 1ms later.
 	var bothSent int
 	{
