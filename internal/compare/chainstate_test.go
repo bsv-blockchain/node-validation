@@ -44,7 +44,7 @@ func TestCategorizeSVNode_table(t *testing.T) {
 	}{
 		{nil, CategoryAccepted},
 		{&jsonrpc.Error{Code: -25, Message: "Missing inputs"}, CategoryUTXOMissing},
-		{&jsonrpc.Error{Code: -27, Message: "transaction already in block chain"}, CategoryConflicting},
+		{&jsonrpc.Error{Code: -27, Message: "transaction already in block chain"}, CategoryAlreadyKnown},
 		{&jsonrpc.Error{Code: -26, Message: "256: txn-mempool-conflict"}, CategoryConflicting},
 		{&jsonrpc.Error{Code: -22, Message: "TX decode failed"}, CategoryMalformed},
 		{&jsonrpc.Error{Code: -26, Message: "non-mandatory-script-verify-flag"}, CategoryNonStandard},
@@ -80,5 +80,16 @@ func TestCompareCategories(t *testing.T) {
 	}
 	if matched {
 		t.Errorf("should NOT match: %s vs %s", tc, sc)
+	}
+
+	// ACCEPTED (Teranode) + ALREADY_KNOWN (SVNode -27) should be treated as
+	// compatible (duplicate-submission semantics: Teranode accepted, SVNode
+	// already had it).
+	matched, tc, sc = CompareCategories(nil, &jsonrpc.Error{Code: -27, Message: "transaction already in block chain"})
+	if tc != CategoryAccepted || sc != CategoryAlreadyKnown {
+		t.Errorf("expected (ACCEPTED, ALREADY_KNOWN), got (%s, %s)", tc, sc)
+	}
+	if !matched {
+		t.Errorf("ACCEPTED vs ALREADY_KNOWN should match")
 	}
 }
