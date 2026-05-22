@@ -74,8 +74,8 @@ rpc_call 18332 "generatetoaddress" "[110, \"$ADDR\"]" >/dev/null
 COUNT=$(rpc_call 18332 "getblockcount" '[]' | jq -r '.result')
 echo "    svnode-1 height: $COUNT"
 
-echo "==> waiting up to 60s for the mesh to converge on the same tip"
-for i in $(seq 1 30); do
+echo "==> waiting up to 30s for the mesh to converge on the same tip"
+for i in $(seq 1 15); do
     TIPS=$(for p in 18332 28332 38332 19292 29292 39292; do
         rpc_call "$p" "getbestblockhash" '[]' 2>/dev/null | jq -r '.result' || echo "ERR"
     done | sort -u)
@@ -86,10 +86,38 @@ for i in $(seq 1 30); do
     fi
     sleep 2
 done
+
+# If Teranodes haven't synced yet, restart them. The cause is a syncPeer-election
+# race: Teranode legacy P2P handshakes with SV nodes at startup (before the
+# `generatetoaddress` 110-block mine), so peers report startingheight=0; the
+# netsync manager doesn't re-evaluate sync candidates once they've been
+# established, so no peer is ever picked for IBD. Restarting the Teranodes
+# forces fresh handshakes with SV nodes which are now at height 110.
 if [ "$UNIQ" != "1" ] || echo "$TIPS" | grep -q ERR; then
-    echo "WARN: mesh did not converge within 60s. Tips:"
-    echo "$TIPS"
-    echo "    Continuing — propagation may complete after bootstrap."
+    echo "==> mesh not converged — restarting Teranodes to break syncPeer race"
+    docker restart node-validation-teranode-1-1 \
+                   node-validation-teranode-2-1 \
+                   node-validation-teranode-3-1 >/dev/null
+    wait_for "teranode-1 RPC (post-restart)" 19292 "getblockchaininfo" 60
+    wait_for "teranode-2 RPC (post-restart)" 29292 "getblockchaininfo" 30
+    wait_for "teranode-3 RPC (post-restart)" 39292 "getblockchaininfo" 30
+    echo "==> waiting up to 30s for the mesh to converge"
+    for i in $(seq 1 15); do
+        TIPS=$(for p in 18332 28332 38332 19292 29292 39292; do
+            rpc_call "$p" "getbestblockhash" '[]' 2>/dev/null | jq -r '.result' || echo "ERR"
+        done | sort -u)
+        UNIQ=$(echo "$TIPS" | wc -l | tr -d ' ')
+        if [ "$UNIQ" = "1" ] && ! echo "$TIPS" | grep -q ERR; then
+            echo "    converged tip: $TIPS"
+            break
+        fi
+        sleep 2
+    done
+    if [ "$UNIQ" != "1" ] || echo "$TIPS" | grep -q ERR; then
+        echo "WARN: mesh did not converge after restart. Tips:"
+        echo "$TIPS"
+        echo "    Continuing — propagation may complete after bootstrap."
+    fi
 fi
 
 echo "==> deriving funding address from config.docker.yaml WIF"
