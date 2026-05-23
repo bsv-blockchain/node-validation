@@ -1,0 +1,31 @@
+# compose/prometheus/prometheus.yml
+# Scrape the 3 Teranode metric endpoints. Labels mirror the upstream
+# (kubernetes) layout so the Teranode dashboards work out of the box:
+#   namespace  per-Teranode (matches the per-node Kafka/postgres isolation)
+#   service    "teranode"   (the all-in-one binary; in k8s these would be
+#                            broken into propagation, validator, etc.)
+#   container  teranode-N
+#   instance   <host>:<port>  (auto-set by Prometheus)
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: teranode
+    metrics_path: /metrics
+    static_configs:
+      - targets: ['teranode-1:9091']
+        labels:
+          namespace: teranode1
+          service: teranode
+          container: teranode-1
+      - targets: ['teranode-2:9091']
+        labels:
+          namespace: teranode2
+          service: teranode
+          container: teranode-2
+      - targets: ['teranode-3:9091']
+        labels:
+          namespace: teranode3
+          service: teranode
+          container: teranode-3
