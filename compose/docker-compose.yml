@@ -4,27 +4,26 @@ services:
 
   # ---------- shared infra ----------
 
-  zookeeper:
-    image: confluentinc/cp-zookeeper:7.5.0
-    environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
-    networks: [tng-net]
-
+  # Redpanda replaces the Confluent kafka + zookeeper pair. Same Kafka wire
+  # protocol (Sarama-compatible), single binary, no Zookeeper. Network-aliased
+  # as `kafka` so Teranode's kafka_*Config=kafka://kafka:9092/... still resolves
+  # and no settings.docker.conf changes are needed.
   kafka:
-    image: confluentinc/cp-kafka:7.5.0
-    depends_on: [zookeeper]
+    image: docker.redpanda.com/redpandadata/redpanda:v24.2.7
+    command:
+      - redpanda
+      - start
+      - --mode=dev-container
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --overprovisioned
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092,EXTERNAL://0.0.0.0:19092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092,EXTERNAL://localhost:19092
     ports:
-      - "127.0.0.1:19092:19092"   # EXTERNAL listener (was 9092, mapped wrong listener)
-    environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:19092
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://localhost:19092
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
-      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      - "127.0.0.1:19092:19092"  # external listener for host-side tooling
     networks: [tng-net]
 
   aerospike:
@@ -78,6 +77,38 @@ services:
     environment:
       SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode1
+      # Per-node clientName so consumer-group IDs are distinct
+      # (group IDs are built as "<service>.<clientName>" — e.g. blocksfinal.legacy.teranode1).
+      clientName: "teranode1"
+      # Hard-coded outbound legacy peers. The .docker.teranodeN context suffix in
+      # settings.docker.conf is not honored by services/legacy/config.go's
+      # reflection-based loader (it does FieldByName("ConnectPeers.docker.teranode1")
+      # which silently fails). An un-suffixed env var bypasses this and reaches
+      # the btcd config struct directly via the --connect / ConnectPeers field.
+      # Note: legacy P2P only accepts /Bitcoin SV:/ user agents, so Teranode↔Teranode
+      # is NOT served by this path — that's handled by the new P2P service below.
+      legacy_config_ConnectPeers: "svnode-1:18444|svnode-2:18444|svnode-3:18444"
+      # New libp2p P2P service. Pinned Ed25519 key so peer IDs are stable across
+      # restarts. p2p_listen_addresses pins libp2p to TCP 9905 (was random by default).
+      # p2p_static_peers wires the other two Teranodes by /dns/<service>/p2p/<peerID>.
+      p2p_private_key: "76e0b4e7bf99eb36595c59ec9ff21ada7be304a2e6009e95820d088be8254de9d95220230ce822d1d5cd38a8722a4a75c2b44770cd502227eaeeab1fa1d1f30a"
+      p2p_listen_addresses: "/ip4/0.0.0.0/tcp/9905"
+      p2p_static_peers: "/dns4/teranode-2/tcp/9905/p2p/12D3KooWLz4HVfn1jCpmVP5zEb7tTXUa1oqqaczcmRbQisRxCCKT|/dns4/teranode-3/tcp/9905/p2p/12D3KooWQbnWZbq48gPXRPDP8TfSB7P69gBL2nnQvUenxL48FGHj"
+      # Required to make conf.Port actually take effect in services/p2p/Server.go:358-361.
+      # The image ships with this set to false; in our isolated docker network we need it on.
+      p2p_share_private_addresses: "true"
+      p2p_allow_private_ips: "true"
+      # Per-Teranode Kafka topic namespace. We share the same Redpanda broker
+      # for infrastructure simplicity but each Teranode must own its own topics
+      # — they're independent nodes, not a clustered consumer group.
+      kafka_blocksConfig:          "kafka://kafka:9092/teranode1-blocks?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_blocksFinalConfig:     "kafka://kafka:9092/teranode1-blocks-final?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_invalidBlocksConfig:   "kafka://kafka:9092/teranode1-invalid-blocks?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_invalidSubtreesConfig: "kafka://kafka:9092/teranode1-invalid-subtrees?partitions=8&replication=1&retention=60000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0"
+      kafka_legacyInvConfig:       "kafka://kafka:9092/teranode1-legacy-inv?partitions=8&replication=1&retention=6000&flush_bytes=1024&flush_messages=16&flush_frequency=1s"
+      kafka_rejectedTxConfig:      "kafka://kafka:9092/teranode1-rejectedtx?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_subtreesConfig:        "kafka://kafka:9092/teranode1-subtrees?partitions=8&replication=1&retention=1800000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0&maxProcessingTime=30000&sessionTimeout=120000&heartbeatInterval=20000&offsetReset=latest"
+      kafka_txmetaConfig:          "kafka://kafka:9092/teranode1-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
     networks: [tng-net]
@@ -99,6 +130,21 @@ services:
     environment:
       SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode2
+      clientName: "teranode2"
+      legacy_config_ConnectPeers: "svnode-1:18444|svnode-2:18444|svnode-3:18444"
+      p2p_private_key: "dd43a8e20210616bc5cf243cf1561c51957dbd75d2555fe168a094ea5a6753b9a5ec24a9ff8954af51983fccdcfd82164a721a1119547a2003c90e6e644e4be2"
+      p2p_listen_addresses: "/ip4/0.0.0.0/tcp/9905"
+      p2p_static_peers: "/dns4/teranode-1/tcp/9905/p2p/12D3KooWQShGhTWq3gBy14sbhhwnnuvs3AdHdo4ubJa8MJJ8SUTb|/dns4/teranode-3/tcp/9905/p2p/12D3KooWQbnWZbq48gPXRPDP8TfSB7P69gBL2nnQvUenxL48FGHj"
+      p2p_share_private_addresses: "true"
+      p2p_allow_private_ips: "true"
+      kafka_blocksConfig:          "kafka://kafka:9092/teranode2-blocks?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_blocksFinalConfig:     "kafka://kafka:9092/teranode2-blocks-final?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_invalidBlocksConfig:   "kafka://kafka:9092/teranode2-invalid-blocks?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_invalidSubtreesConfig: "kafka://kafka:9092/teranode2-invalid-subtrees?partitions=8&replication=1&retention=60000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0"
+      kafka_legacyInvConfig:       "kafka://kafka:9092/teranode2-legacy-inv?partitions=8&replication=1&retention=6000&flush_bytes=1024&flush_messages=16&flush_frequency=1s"
+      kafka_rejectedTxConfig:      "kafka://kafka:9092/teranode2-rejectedtx?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_subtreesConfig:        "kafka://kafka:9092/teranode2-subtrees?partitions=8&replication=1&retention=1800000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0&maxProcessingTime=30000&sessionTimeout=120000&heartbeatInterval=20000&offsetReset=latest"
+      kafka_txmetaConfig:          "kafka://kafka:9092/teranode2-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
     networks: [tng-net]
@@ -120,6 +166,21 @@ services:
     environment:
       SETTINGS_CONTEXT: docker
       SETTINGS_APPLICATION: teranode3
+      clientName: "teranode3"
+      legacy_config_ConnectPeers: "svnode-1:18444|svnode-2:18444|svnode-3:18444"
+      p2p_private_key: "4ef86c557a60322d113f4f2af2846062301f5eac74d7ed7785bfabc28e76a127dba646d0b6a39821d824e91635e0854b4352a701980018501d900c58652a1ea6"
+      p2p_listen_addresses: "/ip4/0.0.0.0/tcp/9905"
+      p2p_static_peers: "/dns4/teranode-1/tcp/9905/p2p/12D3KooWQShGhTWq3gBy14sbhhwnnuvs3AdHdo4ubJa8MJJ8SUTb|/dns4/teranode-2/tcp/9905/p2p/12D3KooWLz4HVfn1jCpmVP5zEb7tTXUa1oqqaczcmRbQisRxCCKT"
+      p2p_share_private_addresses: "true"
+      p2p_allow_private_ips: "true"
+      kafka_blocksConfig:          "kafka://kafka:9092/teranode3-blocks?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_blocksFinalConfig:     "kafka://kafka:9092/teranode3-blocks-final?partitions=1&replication=1&retention=60000&flush_bytes=64&consumerTimeout=1800000"
+      kafka_invalidBlocksConfig:   "kafka://kafka:9092/teranode3-invalid-blocks?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_invalidSubtreesConfig: "kafka://kafka:9092/teranode3-invalid-subtrees?partitions=8&replication=1&retention=60000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0"
+      kafka_legacyInvConfig:       "kafka://kafka:9092/teranode3-legacy-inv?partitions=8&replication=1&retention=6000&flush_bytes=1024&flush_messages=16&flush_frequency=1s"
+      kafka_rejectedTxConfig:      "kafka://kafka:9092/teranode3-rejectedtx?partitions=1&replication=1&retention=600000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s&replay=0"
+      kafka_subtreesConfig:        "kafka://kafka:9092/teranode3-subtrees?partitions=8&replication=1&retention=1800000&segment_bytes=33554432&flush_bytes=64&flush_messages=1&replay=0&maxProcessingTime=30000&sessionTimeout=120000&heartbeatInterval=20000&offsetReset=latest"
+      kafka_txmetaConfig:          "kafka://kafka:9092/teranode3-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
     networks: [tng-net]
@@ -138,7 +199,7 @@ services:
       # conf directly as bitcoin.conf so addnode/ZMQ/wallet settings are applied.
       - ./svnode/bitcoin.conf.svnode-1:/data/bitcoin.conf
     command: >
-      bitcoind -datadir=/data -conf=/data/bitcoin.conf
+      bitcoind -datadir=/data -conf=/data/bitcoin.conf -printtoconsole=1
     networks: [tng-net]
 
   svnode-2:
@@ -149,7 +210,7 @@ services:
     volumes:
       - ./svnode/bitcoin.conf.svnode-2:/data/bitcoin.conf
     command: >
-      bitcoind -datadir=/data -conf=/data/bitcoin.conf
+      bitcoind -datadir=/data -conf=/data/bitcoin.conf -printtoconsole=1
     networks: [tng-net]
 
   svnode-3:
@@ -160,7 +221,7 @@ services:
     volumes:
       - ./svnode/bitcoin.conf.svnode-3:/data/bitcoin.conf
     command: >
-      bitcoind -datadir=/data -conf=/data/bitcoin.conf
+      bitcoind -datadir=/data -conf=/data/bitcoin.conf -printtoconsole=1
     networks: [tng-net]
 
 networks:
