@@ -52,7 +52,7 @@ func TestLoad_shortSubstitution(t *testing.T) {
 	if cfg.Durations.PC1Observation != 30*time.Minute {
 		t.Errorf("--short PC1Observation: got %v", cfg.Durations.PC1Observation)
 	}
-	if cfg.Durations.INTER1Observation != time.Hour {
+	if cfg.Durations.INTER1Observation != 5*time.Minute {
 		t.Errorf("--short INTER1Observation: got %v", cfg.Durations.INTER1Observation)
 	}
 	// DefaultPropagation is not in the --short list and must remain.
