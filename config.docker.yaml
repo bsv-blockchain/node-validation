@@ -29,7 +29,7 @@ funding:
 
 durations:
   pc1_observation: 30m
-  inter1_observation: 1h
+  inter1_observation: 20m
   perf1_per_rate: 30s
   default_propagation: 10s
   client1_observation: 5m
