@@ -1,0 +1,1176 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Teranode Acceptance Report — 2026-05-24</title>
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; max-width: 1100px; margin: 1em auto; padding: 0 1em; color: #1f2328; }
+h1, h2 { border-bottom: 1px solid #d0d7de; padding-bottom: 0.3em; }
+.banner { padding: 1.2em; border-radius: 6px; color: white; font-size: 1.5em; font-weight: 600; }
+.go             { background: #1f883d; }
+.conditional_go { background: #d29922; }
+.no_go          { background: #cf222e; }
+.incomplete     { background: #6e7781; }
+table { border-collapse: collapse; width: 100%; margin: 1em 0; font-size: 0.9em; }
+th, td { padding: 0.4em 0.6em; border: 1px solid #d0d7de; text-align: left; vertical-align: top; }
+th { background: #f6f8fa; }
+.partial { background: #fff8c5; padding: 0.1em 0.4em; border-radius: 4px; font-size: 0.8em; }
+details { margin: 0.5em 0; }
+summary { cursor: pointer; font-weight: 500; }
+.status-PASS  { color: #1a7f37; font-weight: 600; }
+.status-FAIL, .status-ERROR { color: #cf222e; font-weight: 600; }
+.status-SKIPPED, .status-NOT_RUN, .status-DEFERRED, .status-FEATURE_NOT_AVAILABLE { color: #6e7781; }
+footer { color: #6e7781; font-size: 0.85em; margin-top: 3em; border-top: 1px solid #d0d7de; padding-top: 1em; }
+</style>
+</head>
+<body>
+<h1>Teranode Acceptance Tests</h1>
+<p>
+  <strong>Network:</strong> regtest &middot;
+  <strong>Tool version:</strong> sp10-complete-26-ga2b3af9-dirty &middot;
+  <strong>Started:</strong> 2026-05-24 21:38:33 UTC &middot;
+  <strong>Finished:</strong> 2026-05-24 22:20:52 UTC
+   <span class="partial">SHORT MODE</span>
+</p>
+
+<div class="banner incomplete">
+  Verdict: INCOMPLETE (exit 3)<br>
+  <small style="font-weight: 400;">Documentation review required but not supplied via overrides: FR-4, IBD-1</small>
+</div>
+
+<h2>Summary</h2>
+<table>
+<tr><th>Requirements</th><td>total 24, satisfied 12, deferred 6, failed 0</td></tr>
+<tr><th>Test cases</th><td>16 from source plan + 8 added (in scope: 19; new passed: 7)</td></tr>
+<tr><th>Critical</th><td>pass 5 / fail 0</td></tr>
+<tr><th>Important</th><td>pass 2 / fail 0</td></tr>
+<tr><th>Advisory</th><td>pass 7 / fail 0</td></tr>
+<tr><th>Risks</th><td>mitigated 1, partially 6, not 0</td></tr>
+</table>
+
+<h2>Functional Requirements</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Coverage</th><th>Covered by</th><th>Result</th></tr></thead>
+<tbody>
+
+<tr><td>FR-1</td><td>Full Bitcoin SV Protocol Compliance</td><td>AUTOMATED</td><td>PC-1, PC-2</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-2</td><td>Consistent Transaction and Block Formats</td><td>AUTOMATED</td><td>PC-3, CLIENT-2</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-3</td><td>Script Interpreter Parity</td><td>AUTOMATED</td><td>PC-2, IBD-2</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-4</td><td>Historical Chain Validation Evidence</td><td>DOCUMENTATION_REVIEW</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>FR-5</td><td>Reliable Transaction Propagation</td><td>AUTOMATED</td><td>INTER-2, CLIENT-1</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>FR-6</td><td>Block and Transaction Notification Reliability</td><td>AUTOMATED</td><td>CLIENT-1, CLIENT-3</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>FR-7</td><td>Support for Unconfirmed Transaction Chains</td><td>AUTOMATED</td><td>NEW-FR7</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-8</td><td>Transaction Fee Estimation</td><td>AUTOMATED</td><td>NEW-FR8</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>FR-9</td><td>Double-Spend Detection and Notification</td><td>AUTOMATED</td><td>NEW-FR9</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-10</td><td>Historical Data Access</td><td>AUTOMATED</td><td>NEW-FR10</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>FR-11</td><td>Mempool Query and Filtering</td><td>AUTOMATED</td><td>NEW-FR11</td><td class="status-PASS">PASS</td></tr>
+
+</tbody>
+</table>
+
+<h2>Non-Functional Requirements</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Coverage</th><th>Covered by</th><th>Result</th></tr></thead>
+<tbody>
+
+<tr><td>NFR-1</td><td>Upstream Availability Guarantees</td><td>LONG_TERM_OBSERVATION</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>NFR-2</td><td>Fault Tolerance and Recovery</td><td>PRIVILEGED_ACCESS_REQUIRED</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>NFR-3</td><td>Throughput and Latency Performance</td><td>AUTOMATED</td><td>PERF-1</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>NFR-4</td><td>Translation and Gateway Overhead</td><td>PRIVILEGED_ACCESS_REQUIRED</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>NFR-5</td><td>IPv4/IPv6 and Real-World Internet Compat.</td><td>PARTIAL</td><td>INTER-1, CLIENT-1</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>NFR-6</td><td>Interoperability Across Implementations</td><td>AUTOMATED</td><td>INTER-1, INTER-2</td><td class="status-PENDING">PENDING</td></tr>
+
+<tr><td>NFR-7</td><td>Deterministic Behavior Under Load</td><td>AUTOMATED</td><td>NEW-NFR7</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>NFR-8</td><td>API Stability and Versioning</td><td>CONTRACTUAL</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>NFR-9</td><td>API Pricing and Access Model</td><td>CONTRACTUAL</td><td></td><td class="status-DEFERRED">DEFERRED</td></tr>
+
+<tr><td>NFR-10</td><td>Observability and Diagnostics</td><td>AUTOMATED</td><td>OPS-3</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>NFR-11</td><td>Security and Authentication</td><td>AUTOMATED</td><td>NEW-NFR11</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>NFR-12</td><td>Data Consistency Guarantees</td><td>PARTIAL</td><td>PC-1</td><td class="status-PASS">PASS</td></tr>
+
+<tr><td>NFR-13</td><td>Rate Limiting and Throttling</td><td>AUTOMATED</td><td>NEW-NFR13</td><td class="status-PASS">PASS</td></tr>
+
+</tbody>
+</table>
+
+<h2>Test Environment</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Status</th></tr></thead>
+<tbody>
+
+<tr><td>TE-1</td><td>Testnet Deployment</td><td>EXCLUDED_SETUP</td></tr>
+
+<tr><td>TE-2</td><td>Client Integration Sandbox</td><td>EXCLUDED_SETUP</td></tr>
+
+<tr><td>TE-3</td><td>Private Test Network</td><td>EXCLUDED_SETUP</td></tr>
+
+</tbody>
+</table>
+
+<h2>Test Cases</h2>
+<table>
+<thead><tr><th>ID</th><th>Title</th><th>Severity</th><th>Status</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>PC-1</td><td>Parallel Node Comparison</td><td>critical</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>PC-2</td><td>Historical Script and Consensus Regression</td><td>critical</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>PC-3</td><td>Message Format and Wire Protocol Verification</td><td>critical</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>IBD-1</td><td>Historical Validation Evidence Review</td><td>critical</td>
+  <td class="status-EXCLUDED_DOCUMENTATION">
+    EXCLUDED_DOCUMENTATION
+  </td>
+  <td>
+    Source plan itself notes this is documentation review, not testing.
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>IBD-2</td><td>Historical UTXO Spend Verification</td><td>critical</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>PERF-1</td><td>Throughput and Latency Baseline</td><td>important</td>
+  <td class="status-SKIPPED">
+    SKIPPED
+  </td>
+  <td>
+    
+    Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN @rate=10: rpc error -25: TX rejected: PROCESSING (4): [Validate][4b2072f92261038d1d5077da393278d6112d432f4eea8c1a4738900fec3f1c7e] error registering tx in metaStore -&gt; PROCESSING (4): failed to acquire lock -&gt; UNKNOWN (0): ResultCode: FAIL_FORBIDDEN, Iteration: 0, InDoubt: false, Node: BB96A032AC4B1D6 192.168.117.8:3000: Operation not allowed at this time
+    
+  </td>
+</tr>
+
+<tr>
+  <td>PERF-2</td><td>Microservices Horizontal Scaling</td><td>important</td>
+  <td class="status-EXCLUDED_PRIVILEGED">
+    EXCLUDED_PRIVILEGED
+  </td>
+  <td>
+    Requires admin access to scale Teranode replicas.
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>PERF-3</td><td>Gateway and Translation Overhead</td><td>important</td>
+  <td class="status-EXCLUDED_PRIVILEGED">
+    EXCLUDED_PRIVILEGED
+  </td>
+  <td>
+    Requires bypass of Teranode P2P gateway.
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>INTER-1</td><td>Mixed-Network Consensus</td><td>critical</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>INTER-2</td><td>Cross-Implementation Transaction Propagation</td><td>critical</td>
+  <td class="status-SKIPPED">
+    SKIPPED
+  </td>
+  <td>
+    
+    Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN: rpc error -25: TX rejected: PROCESSING (4): [Validate][99a6cea2233a2d24254d1a5809362f75e63c969aee66c02171dc7070d6b98152] error registering tx in metaStore -&gt; PROCESSING (4): failed to acquire lock -&gt; UNKNOWN (0): ResultCode: FAIL_FORBIDDEN, Iteration: 0, InDoubt: false, Node: BB96A032AC4B1D6 192.168.117.8:3000: Operation not allowed at this time
+    
+  </td>
+</tr>
+
+<tr>
+  <td>CLIENT-1</td><td>TNG P2P Client Functional Tests</td><td>critical</td>
+  <td class="status-SKIPPED">
+    SKIPPED
+  </td>
+  <td>
+    
+    Asset Centrifuge endpoint unavailable in v0.15.0-beta-2 after restart: centrifuge connect timeout
+    
+  </td>
+</tr>
+
+<tr>
+  <td>CLIENT-2</td><td>Extended Transaction Format Support</td><td>important</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>CLIENT-3</td><td>Notification Stream Reliability</td><td>critical</td>
+  <td class="status-SKIPPED">
+    SKIPPED
+  </td>
+  <td>
+    
+    Asset Centrifuge endpoint unavailable in v0.15.0-beta-2 after restart: centrifuge connect timeout
+    
+  </td>
+</tr>
+
+<tr>
+  <td>OPS-1</td><td>Service Failure and Recovery</td><td>important</td>
+  <td class="status-EXCLUDED_PRIVILEGED">
+    EXCLUDED_PRIVILEGED
+  </td>
+  <td>
+    Requires killing internal microservices.
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>OPS-2</td><td>Network Partition and Reorg Convergence</td><td>important</td>
+  <td class="status-EXCLUDED_PRIVILEGED">
+    EXCLUDED_PRIVILEGED
+  </td>
+  <td>
+    Requires controlling the entire test network.
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>OPS-3</td><td>Observability and Monitoring</td><td>important</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-FR7</td><td>Unconfirmed Transaction Chain Acceptance</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-FR8</td><td>Fee Estimation Endpoint Validation</td><td>advisory</td>
+  <td class="status-FEATURE_NOT_AVAILABLE">
+    FEATURE_NOT_AVAILABLE
+  </td>
+  <td>
+    
+    estimatefee returns ErrRPCUnimplemented per SP2 discovery (services/rpc/Server.go:162 routes to handleUnimplemented)
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-FR9</td><td>Double-Spend Detection Behaviour</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-FR10</td><td>Historical Data Access Latency</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-FR11</td><td>Mempool Query Capabilities</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-NFR7</td><td>Deterministic Behaviour Under Repeated Operations</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-NFR11</td><td>Transport Security and Authentication Probe</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+<tr>
+  <td>NEW-NFR13</td><td>Rate Limit Discovery and Error Semantics</td><td>advisory</td>
+  <td class="status-PASS">
+    PASS
+  </td>
+  <td>
+    
+    
+    
+  </td>
+</tr>
+
+</tbody>
+</table>
+
+<h2>Test case details</h2>
+
+
+<details>
+<summary><strong>PC-1</strong> — Parallel Node Comparison <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Transient divergence in accepted/rejected blocks ≤20% of polling rounds</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>divergence_samples=50 total_rounds=287</td>
+</tr>
+
+<tr>
+  <td>≥95% match in tx validity decisions across all batches</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>matched=19/20 batches=4</td>
+</tr>
+
+<tr>
+  <td>Both nodes converge to same tip within 20s of reorg</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>reorged=true err=&lt;nil&gt;</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>PC-2</strong> — Historical Script and Consensus Regression <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>≥30 PC-2 fixtures present (per source plan PC-2)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>loaded=30</td>
+</tr>
+
+<tr>
+  <td>100% match on accept/reject decisions across all fixtures</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>matched=30/30 mismatches=0</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>PC-3</strong> — Message Format and Wire Protocol Verification <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Teranode accepts P2PKH tx via sendrawtransaction</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=&#34;9f5ffbc95bff0afeb8490423a745bd6b41193d970bfe989d19f26de1634ab3a9&#34; err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Returned P2PKH txid matches locally-computed</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=9f5ffbc95bff0afeb8490423a745bd6b41193d970bfe989d19f26de1634ab3a9 expected=9f5ffbc95bff0afeb8490423a745bd6b41193d970bfe989d19f26de1634ab3a9</td>
+</tr>
+
+<tr>
+  <td>Teranode REST returns P2PKH tx body</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>bytes=265 err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>P2PKH tx re-parses with matching txid</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Teranode accepts P2MS tx via sendrawtransaction</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=&#34;736c85b6108094ee6a79e55f5235f5d6ead85ab3c90b8f6a6f4108b47970d255&#34; err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Returned P2MS txid matches locally-computed</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=736c85b6108094ee6a79e55f5235f5d6ead85ab3c90b8f6a6f4108b47970d255 expected=736c85b6108094ee6a79e55f5235f5d6ead85ab3c90b8f6a6f4108b47970d255</td>
+</tr>
+
+<tr>
+  <td>Teranode REST returns P2MS tx body</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>bytes=342 err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>P2MS tx re-parses with matching txid</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Teranode accepts OP_RETURN tx via sendrawtransaction</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=&#34;d4607f0423e467a266e6cecaf37e6fa0eb6de0e8b73185e4c01d0ab67acf3b55&#34; err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Returned OP_RETURN txid matches locally-computed</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=d4607f0423e467a266e6cecaf37e6fa0eb6de0e8b73185e4c01d0ab67acf3b55 expected=d4607f0423e467a266e6cecaf37e6fa0eb6de0e8b73185e4c01d0ab67acf3b55</td>
+</tr>
+
+<tr>
+  <td>Teranode REST returns OP_RETURN tx body</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>bytes=259 err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>OP_RETURN tx re-parses with matching txid</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>All 3 test txs propagated to svnode-1 mempool</td>
+  <td>no</td>
+  <td class="status-PASS">PASS</td>
+  <td>observed via getrawmempool</td>
+</tr>
+
+<tr>
+  <td>Block mined via svnode-1</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>hashes=[4a5ddbe249f31b6710b24b9c1d18fa9be74489e35992ddddb31a945a9e5d4c8d] err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Teranode tip reached mined block within 60s</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>tip=4a5ddbe249f31b6710b24b9c1d18fa9be74489e35992ddddb31a945a9e5d4c8d err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Block bytes fetched via Teranode REST</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>bytes=925 err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Block parses with standard libsv parser</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>txs_in_block=4 err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Block contains P2PKH test tx (9f5ffbc95b…)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Block contains P2MS test tx (736c85b610…)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Block contains OP_RETURN test tx (d4607f0423…)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+
+
+<details>
+<summary><strong>IBD-2</strong> — Historical UTXO Spend Verification <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>≥10 IBD-2 fixtures present (per source plan IBD-2)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>loaded=10</td>
+</tr>
+
+<tr>
+  <td>100% match on accept/reject decisions across all fixtures</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>matched=10/10 mismatches=0</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+
+
+
+
+
+
+<details>
+<summary><strong>INTER-1</strong> — Mixed-Network Consensus <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Transient divergence ≤20% of polling rounds during observe phase</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>divergence_samples=29 total_rounds=190</td>
+</tr>
+
+<tr>
+  <td>Reorg induction completed and both nodes converged</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Comparable orphan rate (within 2×) during reorg phase</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>each side produced 1 orphan during the induced reorg (B1 on svnode side, T1 transient on teranode side)</td>
+</tr>
+
+<tr>
+  <td>Blocks from both implementations accepted with comparable frequency</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>svnode-1&#39;s B1 propagated to all nodes before being orphaned; teranode-1&#39;s T2 propagated and won</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+
+
+
+
+<details>
+<summary><strong>CLIENT-2</strong> — Extended Transaction Format Support <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Teranode accepts extended-format transaction</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=&#34;04d5e7a1b52c4978fed1d982b260a6359dcc7b101041591d6be619fbc7f3d714&#34; err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Standard-format hex computed from extended source</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Teranode accepts standard-format transaction (backward compat)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>returned=&#34;2da9de0e74136cfac41f7d9ece8ff942f07b4c2708273de9cf73a99251eb9ef7&#34; err=&lt;nil&gt;</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+
+
+
+
+
+
+<details>
+<summary><strong>OPS-3</strong> — Observability and Monitoring <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Metrics endpoint returns 200 with parseable Prometheus body</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>scraped 1254 metric families; err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>Metric &#34;teranode_blockassembly_best_block_height&#34; present (chain tip height)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Metric &#34;teranode_blockchain_fsm_current_state&#34; present (sync status)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Metric &#34;teranode_blockassembly_transactions&#34; present (mempool size)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Metric &#34;teranode_validator_transactions_count&#34; present (transaction throughput)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Metric &#34;teranode_blockvalidation_validate_block_count&#34; present (block validation latency)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Health endpoint returns 200 with JSON-parseable body</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>status=&#34;200&#34; services=13 err=&lt;nil&gt;</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-FR7</strong> — Unconfirmed Transaction Chain Acceptance <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Full chain of depth 25 accepted by Teranode mempool</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>accepted=25/25</td>
+</tr>
+
+<tr>
+  <td>All 25 chain txs visible in SV Node mempool within 10s</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>seen=25/25</td>
+</tr>
+
+<tr>
+  <td>All 25 chain txs mined into a single block (no intermediate confirmations)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>confirmed=25/25</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+
+
+<details>
+<summary><strong>NEW-FR9</strong> — Double-Spend Detection Behaviour <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>tx1 (first-seen) accepted by Teranode RPC</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+<tr>
+  <td>tx2 (conflicting) rejected synchronously by Teranode RPC</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=rpc error -25: TX rejected: PROCESSING (4): [Validate][c13ee67c04ceda07445329acace69da1484871ac5b99b27fd5b75570b6f9dfd5] error spending utxos -&gt; PROCESSING (4): validator: UTXO Store spend failed for c13ee67c04ceda07445329acace69da1484871ac5b99b27fd5b75570b6f9dfd5 -&gt; UTXO_ERROR (79): error in aerospike spend (batched mode) - errors -&gt; UTXO_SPENT (70): UTXO_SPENT (70): 02c4c3d5f480bdf88e9249b00d5b53707d67871908c056eb34a684e5191af3ff:1 utxo already spent by tx 63a6da1d6cf2e5bad1d3cdb973dd7e79555a3d3d98f92f3dbce0ddf4398aba36[0] &#34;utxo 02c4c3d5f480bdf88e9249b00d5b53707d67871908c056eb34a684e5191af3ff already spent by 63a6da1d6cf2e5bad1d3cdb973dd7e79555a3d3d98f92f3dbce0ddf4398aba36[0]&#34;</td>
+</tr>
+
+<tr>
+  <td>Notification on /p2p-ws within 5s carrying tx2&#39;s txid</td>
+  <td>no</td>
+  <td class="status-FAIL">FAIL</td>
+  <td>matched=false expected_txid=c13ee67c04ceda07445329acace69da1484871ac5b99b27fd5b75570b6f9dfd5</td>
+</tr>
+
+<tr>
+  <td>tx1 (winner) is in the mined block</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>block=2a76bcb496cc9e6918c584d80cc63345b1b69e7eb5381c9c1aa0411fd3b0369c tx1=63a6da1d6cf2e5bad1d3cdb973dd7e79555a3d3d98f92f3dbce0ddf4398aba36 present=true</td>
+</tr>
+
+<tr>
+  <td>Low-confirmation double-spend handled (FR-9 criterion 3 part 2)</td>
+  <td>no</td>
+  <td class="status-FAIL">FAIL</td>
+  <td>regtest mining cadence makes this awkward to test deterministically</td>
+</tr>
+
+<tr>
+  <td>Clear indication of which transaction is likely to confirm</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>Synchronous RPC error on tx2 indicates tx1 is the winner</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-FR10</strong> — Historical Data Access Latency <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>tx-by-id p95 ≤ 100ms</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>p95=0s target=100ms sample=0</td>
+</tr>
+
+<tr>
+  <td>block-by-hash p95 ≤ 100ms</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>p95=711.292µs target=100ms sample=50</td>
+</tr>
+
+<tr>
+  <td>block-by-height p95 ≤ 100ms (via /search)</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>p95=478.958µs target=100ms sample=50</td>
+</tr>
+
+<tr>
+  <td>Address-history queries supported with pagination</td>
+  <td>no</td>
+  <td class="status-FAIL">FAIL</td>
+  <td>absent in v0.15.0-beta-2 per SP2 discovery §2 gap 1; no /address/ route registered</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-FR11</strong> — Mempool Query Capabilities <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>getrawmempool returns []string</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt; len=4</td>
+</tr>
+
+<tr>
+  <td>Chain tx 0 (0f21297236…) in getrawmempool</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Chain tx 1 (7ea6434ccb…) in getrawmempool</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>Chain tx 2 (8a432b6d47…) in getrawmempool</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>present=true</td>
+</tr>
+
+<tr>
+  <td>getmempoolentry: per SP2 discovery absent or unimplemented</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=rpc error -1: Command unimplemented</td>
+</tr>
+
+<tr>
+  <td>getmempoolancestors: per SP2 discovery absent or unimplemented</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=rpc error -32601: Method not found</td>
+</tr>
+
+<tr>
+  <td>getmempooldescendants: per SP2 discovery absent or unimplemented</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=rpc error -32601: Method not found</td>
+</tr>
+
+<tr>
+  <td>getmempoolinfo: per SP2 discovery absent or unimplemented</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=rpc error -1: Command unimplemented</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-NFR7</strong> — Deterministic Behaviour Under Repeated Operations <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>getblockhash @93 returns identical result across 50 iterations</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>errs=0 drifts=0</td>
+</tr>
+
+<tr>
+  <td>getblock(verbosity=0) returns byte-identical hex across 50 iterations</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>errs=0 drifts=0</td>
+</tr>
+
+<tr>
+  <td>getbestblockhash returns well-formed hash across 50 iterations</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>errs=0 malformed=0</td>
+</tr>
+
+<tr>
+  <td>Read ops return identical results under 100 TPS load</td>
+  <td>no</td>
+  <td class="status-FAIL">FAIL</td>
+  <td>not yet integrated with PERF-1 TPS-ramp infrastructure</td>
+</tr>
+
+<tr>
+  <td>Read ops return identical results under 500 TPS load</td>
+  <td>no</td>
+  <td class="status-FAIL">FAIL</td>
+  <td>not yet integrated with PERF-1 TPS-ramp infrastructure</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-NFR11</strong> — Transport Security and Authentication Probe <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>[teranode.rpc] transport scheme is &#34;http&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>[teranode.rest] transport scheme is &#34;http&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>[teranode.notifications] transport scheme is &#34;ws&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>[teranode.metrics] transport scheme is &#34;http&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>[teranode.health] transport scheme is &#34;http&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>[svnode.rpc] transport scheme is &#34;http&#34;</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>regtest plain transport — production deployment must terminate TLS in front</td>
+</tr>
+
+<tr>
+  <td>Teranode RPC rejects unauthenticated requests with 401</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=unauthorized (HTTP 401) for method getbestblockhash</td>
+</tr>
+
+<tr>
+  <td>Teranode RPC accepts authenticated requests</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>err=&lt;nil&gt;</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<details>
+<summary><strong>NEW-NFR13</strong> — Rate Limit Discovery and Error Semantics <span class="status-PASS">PASS</span></summary>
+<table>
+<thead><tr><th>Check</th><th>Required</th><th>Result</th><th>Detail</th></tr></thead>
+<tbody>
+
+<tr>
+  <td>Rate-limit probe completed without hitting a limit</td>
+  <td>yes</td>
+  <td class="status-PASS">PASS</td>
+  <td>sent=2334 succeeded=2334 max_rate=1000 duration=5s observed=no_limit_reached</td>
+</tr>
+
+</tbody>
+</table>
+</details>
+
+
+
+<h2>Risks</h2>
+<table>
+<thead><tr><th>ID</th><th>Description</th><th>Mitigation</th><th>Mitigating tests</th></tr></thead>
+<tbody>
+
+<tr><td>R1</td><td>Transaction loss / inconsistent mempools (changed propagation, overlays)</td><td>PARTIALLY_MITIGATED</td><td>INTER-2, CLIENT-1, CLIENT-3, NEW-FR7</td></tr>
+
+<tr><td>R2</td><td>Protocol fragmentation / forks (message formats, translation, interop gaps)</td><td>PARTIALLY_MITIGATED</td><td>PC-1, PC-3, INTER-1, INTER-2, CLIENT-2</td></tr>
+
+<tr><td>R3</td><td>Undetected consensus bugs (script interpreter parity, historical flags)</td><td>MITIGATED</td><td>PC-1, PC-2, IBD-2</td></tr>
+
+<tr><td>R4</td><td>Undetected consensus bugs (incomplete historical validation)</td><td>PARTIALLY_MITIGATED</td><td>IBD-1, IBD-2</td></tr>
+
+<tr><td>R5</td><td>Excessive operational cost / API fees</td><td>PARTIALLY_MITIGATED</td><td>PERF-1</td></tr>
+
+<tr><td>R6</td><td>Underdocumented architecture (txn trees, microservices, overlays)</td><td>PARTIALLY_MITIGATED</td><td>OPS-3, CLIENT-1, CLIENT-3, NEW-FR11</td></tr>
+
+<tr><td>R7</td><td>Real-world IPv4/IPv6 connectivity and partition behaviour</td><td>PARTIALLY_MITIGATED</td><td>INTER-1, CLIENT-1</td></tr>
+
+</tbody>
+</table>
+
+<footer>
+Source plan: TNG Teranode Requirements and Test Plan, version 1.3 (28/04/2026).
+Tool: sp10-complete-26-ga2b3af9-dirty.
+</footer>
+</body>
+</html>

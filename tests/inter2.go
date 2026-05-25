@@ -116,7 +116,7 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		}
 	}
 	if err != nil && strings.Contains(err.Error(), "FAIL_FORBIDDEN") {
-		return skipMissing(res, "Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN: "+err.Error())
+		return skipMissing(res, "Aerospike FAIL_FORBIDDEN on tx-creation lock (lock record TTL write rejected; check nsup-period > 0 on the namespace): "+err.Error())
 	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		fmt.Sprintf("Splitter tx with %d outputs accepted", count),

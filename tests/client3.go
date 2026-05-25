@@ -70,7 +70,7 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	if err := notif.Connect(ctx); err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "bad handshake") || strings.Contains(msg, "centrifuge connect timeout") {
-			return skipMissing(res, "Asset Centrifuge endpoint unavailable in v0.15.0-beta-2 after restart: "+msg)
+			return skipMissing(res, "Teranode Asset Centrifuge transport mis-configured as Unidirectional=true (push-format connect reply that bidirectional clients can't parse): "+msg)
 		}
 		return errorResult(res, fmt.Errorf("connect: %w", err))
 	}
