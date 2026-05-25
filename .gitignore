@@ -1,6 +1,8 @@
 bin/
 report.json
 report.html
+report.short.json
+report.short.html
 coverage.out
 coverage.html
 config.yaml
