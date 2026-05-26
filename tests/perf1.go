@@ -36,8 +36,8 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
-func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
-	res := testrunner.Result{
+func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) {
+	res = testrunner.Result{
 		ID: "PERF-1", Title: "Throughput and Latency Baseline",
 		Severity:              matrix.SeverityImportant,
 		StartedAt:             env.Now(),
@@ -52,6 +52,10 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		env.TxGen == nil {
 		return skipMissing(res, "client(s) not configured")
 	}
+
+	// See INTER-2 — funder is reset/repopulated mid-test; restore on
+	// non-PASS to avoid poisoning subsequent tests.
+	defer restoreFunderOnNonPass(env.TxGen, &res)()
 
 	maxTPS := env.Cfg.Limits.PERF1MaxTPS
 	if maxTPS <= 0 {

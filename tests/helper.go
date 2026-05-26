@@ -25,6 +25,37 @@ type mempoolReader interface {
 	GetRawMempool(ctx context.Context) ([]string, error)
 }
 
+// restoreFunderOnNonPass snapshots the funder's UTXO set up-front and returns
+// a function that restores it iff `res` does not end up PASS. Use it via:
+//
+//	restore := restoreFunderOnNonPass(funder, &res)
+//	defer restore()
+//
+// Required for tests that call funder.Reset() / ConfirmMulti() to pivot to a
+// splitter mid-test (INTER-2, PERF-1, CLIENT-3): if the test SKIPs or FAILs
+// part-way, subsequent tests would inherit UTXOs whose parent tx never
+// reached the chain (e.g. when the splitter is accepted by Teranode but
+// doesn't propagate to svnode, mining doesn't confirm it, and child txs fail
+// referencing the unknown parent).
+//
+// Callers MUST use named returns so the deferred function reads the final
+// res.Status assigned by deriveStatus or skip/error helpers.
+func restoreFunderOnNonPass(funder *txgen.Funder, res *testrunner.Result) func() {
+	saved := funder.SnapshotUTXOs()
+	return func() {
+		if res == nil {
+			return
+		}
+		if res.Status == testrunner.StatusPass {
+			return
+		}
+		funder.Reset()
+		for _, u := range saved {
+			funder.AddUTXO(u)
+		}
+	}
+}
+
 // Compile-time interface satisfaction check.
 var _ mempoolReader = (*teranode.RPCClient)(nil)
 

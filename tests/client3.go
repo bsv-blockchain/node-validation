@@ -41,8 +41,8 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
-func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
-	res := testrunner.Result{
+func RunCLIENT3(ctx context.Context, env *testrunner.Env) (res testrunner.Result) {
+	res = testrunner.Result{
 		ID: "CLIENT-3", Title: "Notification Stream Reliability",
 		Severity:              matrix.SeverityCritical,
 		StartedAt:             env.Now(),
@@ -57,6 +57,10 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		env.SVNode == nil || env.SVNode.RPC == nil || env.TxGen == nil {
 		return skipMissing(res, "client(s) not configured")
 	}
+
+	// See INTER-2 — funder is reset/repopulated mid-test; restore on
+	// non-PASS to avoid poisoning subsequent tests.
+	defer restoreFunderOnNonPass(env.TxGen, &res)()
 
 	count := env.Cfg.Limits.CLIENT3TxCount
 	if count <= 0 {
