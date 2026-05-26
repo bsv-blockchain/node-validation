@@ -266,7 +266,11 @@ func submitAndConfirm(
 		fmt.Sprintf("err=%v", err),
 	))
 
-	funder.Confirm(bres.Inputs, bres.Change)
+	// Mine 1 block to confirm this tx on-chain so the next call (which may
+	// spend the change UTXO via the shared funder) finds the parent in
+	// storage rather than in the unconfirmed mempool. See helper.go on
+	// confirmAndMine for why bare funder.Confirm is unsafe here.
+	_ = confirmAndMine(ctx, env, returnedTxid, bres.Inputs, bres.Change)
 	*txs = append(*txs, builtTx{shape: shape, expected: bres.TxID, txid: returnedTxid})
 	return nil
 }

@@ -6,7 +6,37 @@ import (
 	"time"
 
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
+	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
+
+// TestConfirmAndMine_updatesFunderEvenWithoutSVConfigured pins the contract:
+// funder mutation happens unconditionally; mining is best-effort and may
+// error if SV is not configured. This matches existing bare funder.Confirm
+// semantics (which has no failure mode), so dropping confirmAndMine into a
+// place where Confirm was used previously won't change funder state on
+// non-test paths.
+func TestConfirmAndMine_updatesFunderEvenWithoutSVConfigured(t *testing.T) {
+	wif := "cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA"
+	f, err := txgen.NewFunder(nil, wif, nil)
+	if err != nil {
+		t.Fatalf("NewFunder: %v", err)
+	}
+	spent := txgen.UTXO{TxID: [32]byte{0x01}, Vout: 0, Satoshis: 100_000}
+	f.AddUTXO(spent)
+	change := &txgen.UTXO{TxID: [32]byte{0x02}, Vout: 0, Satoshis: 50_000}
+
+	env := &testrunner.Env{TxGen: f}
+	// No SVNode configured → mining errors, but the funder mutation
+	// must still apply (caller's tx was already submitted; the funder
+	// view has to reflect that regardless of whether we managed to mine).
+	if err := confirmAndMine(context.Background(), env, "deadbeef", []txgen.UTXO{spent}, change); err == nil {
+		t.Fatal("want error from mineAfterSubmit when SV unconfigured")
+	}
+	got := f.SnapshotUTXOs()
+	if len(got) != 1 || got[0].TxID != change.TxID {
+		t.Errorf("after confirmAndMine: got %+v; want exactly the change UTXO", got)
+	}
+}
 
 // stubMempool is a mempoolReader that returns a fixed txid list.
 type stubMempool struct{ txids []string }
