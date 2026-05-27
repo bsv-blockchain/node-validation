@@ -62,17 +62,20 @@ func RunCLIENT1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	}
 	res.Observations["observation_window"] = obs.String()
 
-	// Establish notification session. Teranode v0.15.0-beta-2 has a known
-	// post-restart bug where Asset's /connection/websocket returns 503
-	// ('Asset service not ready - current node status unknown') and
-	// centrifuge clients fail with 'bad handshake'. Skip cleanly when this
-	// happens — the test cannot run, but it's a build limitation, not a
-	// test bug.
+	// Establish notification session. Teranode's Asset WebSocket transport
+	// hardcodes Unidirectional()=true in services/asset/centrifuge_impl/
+	// websocket.go (verified v0.15.0-beta-2 and v0.15.1), causing the
+	// centrifuge server to emit connect-replies in push envelope (Push.Connect,
+	// no Id). Bidirectional centrifuge-go clients can't parse this — the
+	// reply is silently dropped as a server ping (client.go handle() requires
+	// Reply.Id > 0 OR Reply.Push != nil). Connect future never resolves, 5s
+	// ReadTimeout fires. Skip cleanly until upstream fixes — track at
+	// https://github.com/bsv-blockchain/teranode/issues (filed by harness team).
 	notif := env.Teranode.Notifications
 	if err := notif.Connect(ctx); err != nil {
 		msg := err.Error()
 		if strings.Contains(msg, "bad handshake") || strings.Contains(msg, "centrifuge connect timeout") {
-			return skipMissing(res, "Asset Centrifuge endpoint unavailable in v0.15.0-beta-2 after restart: "+msg)
+			return skipMissing(res, "Teranode Asset Centrifuge transport mis-configured as Unidirectional=true (push-format connect reply that bidirectional clients can't parse): "+msg)
 		}
 		return errorResult(res, fmt.Errorf("connect notifications: %w", err))
 	}

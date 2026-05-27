@@ -51,8 +51,8 @@ func txidsOf(txs []interTx) []string {
 	return out
 }
 
-func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
-	res := testrunner.Result{
+func RunINTER2(ctx context.Context, env *testrunner.Env) (res testrunner.Result) {
+	res = testrunner.Result{
 		ID: "INTER-2", Title: "Cross-Implementation Transaction Propagation",
 		Severity:              matrix.SeverityCritical,
 		StartedAt:             env.Now(),
@@ -67,6 +67,15 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		env.TxGen == nil {
 		return skipMissing(res, "client(s) not configured")
 	}
+
+	// Snapshot funder UTXOs and restore on any non-PASS exit. INTER-2 calls
+	// funder.Reset() + ConfirmMulti() to pivot the funder to the splitter's
+	// outputs; if the test SKIPs or FAILs after that point, the funder is
+	// left holding UTXOs whose parent tx may never have been confirmed
+	// (currently the case when the splitter is accepted by Teranode but
+	// doesn't propagate to svnode). Without this restore, every subsequent
+	// test that uses the funder fails with "error getting parent transaction".
+	defer restoreFunderOnNonPass(env.TxGen, &res)()
 
 	count := env.Cfg.Limits.INTER2TxCount
 	if count <= 0 {
@@ -116,7 +125,7 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		}
 	}
 	if err != nil && strings.Contains(err.Error(), "FAIL_FORBIDDEN") {
-		return skipMissing(res, "Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN: "+err.Error())
+		return skipMissing(res, "Aerospike FAIL_FORBIDDEN on tx-creation lock (lock record TTL write rejected; check nsup-period > 0 on the namespace): "+err.Error())
 	}
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
 		fmt.Sprintf("Splitter tx with %d outputs accepted", count),

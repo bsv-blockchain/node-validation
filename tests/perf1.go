@@ -36,8 +36,8 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
-func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
-	res := testrunner.Result{
+func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) {
+	res = testrunner.Result{
 		ID: "PERF-1", Title: "Throughput and Latency Baseline",
 		Severity:              matrix.SeverityImportant,
 		StartedAt:             env.Now(),
@@ -52,6 +52,10 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		env.TxGen == nil {
 		return skipMissing(res, "client(s) not configured")
 	}
+
+	// See INTER-2 — funder is reset/repopulated mid-test; restore on
+	// non-PASS to avoid poisoning subsequent tests.
+	defer restoreFunderOnNonPass(env.TxGen, &res)()
 
 	maxTPS := env.Cfg.Limits.PERF1MaxTPS
 	if maxTPS <= 0 {
@@ -125,7 +129,7 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		}
 		if submitErr != nil {
 			if strings.Contains(submitErr.Error(), "FAIL_FORBIDDEN") {
-				return skipMissing(res, fmt.Sprintf("Teranode v0.15.0-beta-2 rejects high-fan-out splitter with Aerospike FAIL_FORBIDDEN @rate=%d: %s", rate, submitErr.Error()))
+				return skipMissing(res, fmt.Sprintf("Aerospike FAIL_FORBIDDEN on tx-creation lock @rate=%d (lock record TTL write rejected; check nsup-period > 0 on the namespace): %s", rate, submitErr.Error()))
 			}
 			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, submitErr))
 		}

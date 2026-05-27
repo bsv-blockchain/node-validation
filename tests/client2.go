@@ -90,7 +90,11 @@ func RunCLIENT2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 		fmt.Sprintf("returned=%q err=%v", extTxID, err),
 	))
 	if err == nil {
-		funder.Confirm(bres.Inputs, bres.Change)
+		// confirmAndMine instead of bare funder.Confirm: mine 1 block on SV
+		// so the change UTXO we just registered has a confirmed parent
+		// before the next test (or the next BuildP2PKH below) tries to spend
+		// from it. See helper.go for the rationale.
+		_ = confirmAndMine(ctx, env, extTxID, bres.Inputs, bres.Change)
 	}
 
 	// 2. Build a standard-format tx and submit. Funder.Builder always produces
@@ -119,7 +123,7 @@ func RunCLIENT2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 			fmt.Sprintf("returned=%q err=%v", stdTxID, err),
 		))
 		if err == nil {
-			funder.Confirm(bres2.Inputs, bres2.Change)
+			_ = confirmAndMine(ctx, env, stdTxID, bres2.Inputs, bres2.Change)
 		}
 	}
 

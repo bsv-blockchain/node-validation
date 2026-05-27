@@ -25,6 +25,39 @@ type mempoolReader interface {
 	GetRawMempool(ctx context.Context) ([]string, error)
 }
 
+// restoreFunderOnNonPass returns a deferred cleanup that clears the funder
+// if the test does not end up PASS. Use it via:
+//
+//	defer restoreFunderOnNonPass(funder, &res)()
+//
+// Required for tests that call funder.Reset() / ConfirmMulti() to pivot to a
+// splitter mid-test (INTER-2, PERF-1, CLIENT-3): if the test SKIPs or FAILs
+// part-way, the funder is left holding splitter-derived UTXOs whose parent
+// tx never reached the chain (Teranode→SV legacy P2P doesn't propagate
+// reliably; teranode#942). Subsequent tests would then fail referencing
+// those phantom parents.
+//
+// A previous version of this helper snapshot+restored the pre-test UTXO
+// set, but that puts back UTXOs that the test's own (successful)
+// submissions may already have spent on chain — leading to "UTXO already
+// spent" errors downstream. Just clearing the funder is correct: every
+// test that needs UTXOs guards with `if funder.Balance() < N {
+// bootstrapConfirmed(...) }`, so a reset just forces fresh bootstrap.
+//
+// Callers MUST use named returns so the deferred function reads the final
+// res.Status assigned by deriveStatus or skip/error helpers.
+func restoreFunderOnNonPass(funder *txgen.Funder, res *testrunner.Result) func() {
+	return func() {
+		if res == nil {
+			return
+		}
+		if res.Status == testrunner.StatusPass {
+			return
+		}
+		funder.Reset()
+	}
+}
+
 // Compile-time interface satisfaction check.
 var _ mempoolReader = (*teranode.RPCClient)(nil)
 
@@ -160,6 +193,49 @@ func mineBlocks(ctx context.Context, env *testrunner.Env, n int) ([]string, erro
 		return nil, fmt.Errorf("generatetoaddress: %w", err)
 	}
 	return hashes, nil
+}
+
+// mineAfterSubmit mines 1 block on svnode-1 to advance the chain after a
+// test submits txs to Teranode and updates funder state. Best-effort: if
+// the Teranode-submitted tx hasn't propagated to SV (Teranode v0.15.1
+// outbound legacy P2P broadcast is broken — see teranode#942), the SV mine
+// will be empty and the tx stays unconfirmed.
+//
+// We deliberately mine on SV rather than Teranode because Teranode-mined
+// blocks in v0.15.1 also don't propagate back to SV (same outbound P2P
+// bug surface), which creates a permanent chain divergence that wrecks
+// INTER-1's "Mixed-Network Consensus" test. Until Teranode fixes outbound
+// propagation, SV-side mining is the only path that keeps both chains in
+// sync — even though it means Teranode-only txs stay phantom.
+//
+// Procedure:
+//  1. svnode-1 getnewaddress → coinbase address
+//  2. svnode-1 generatetoaddress 1 <addr>  (mines from svnode-1's mempool)
+//  3. Wait for teranode-1's tip to match (block propagates SV→Teranode fine).
+func mineAfterSubmit(ctx context.Context, env *testrunner.Env, _ ...string) error {
+	if env.SVNode == nil || env.SVNode.RPC == nil {
+		return errors.New("svnode RPC not configured")
+	}
+	hashes, err := mineBlocks(ctx, env, 1)
+	if err != nil {
+		return err
+	}
+	if env.Teranode != nil && env.Teranode.RPC != nil && len(hashes) > 0 {
+		return waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], 30*time.Second)
+	}
+	return nil
+}
+
+// confirmAndMine is the safe replacement for bare funder.Confirm(spent,
+// change) when `change` came from a tx that was submitted to Teranode but
+// not yet mined. It updates the funder's UTXO set AND mines a block so
+// the new UTXO is backed by a confirmed parent.
+//
+// Returns the error from mining; the funder is always updated even on
+// mining failure (consistent with bare funder.Confirm behaviour).
+func confirmAndMine(ctx context.Context, env *testrunner.Env, txid string, spent []txgen.UTXO, change *txgen.UTXO) error {
+	env.TxGen.Confirm(spent, change)
+	return mineAfterSubmit(ctx, env, txid)
 }
 
 // bootstrapConfirmed wraps Funder.Bootstrap with mining + propagation
