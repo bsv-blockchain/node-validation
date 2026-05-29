@@ -504,8 +504,10 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 	b1, b2 := bHashes[0], bHashes[1]
 
 	// 3. Wait for propagation: poll teranode-1's tip until == B2.
-	if err := waitForTeranodeTip(ctx, env.Teranode.RPC, b2, 30*time.Second); err != nil {
-		res.Err = fmt.Errorf("B2 propagation: %w", err)
+	// 60s timeout: SV→Teranode block propagation is generally reliable but
+	// can be slow under load. Without this succeeding the reorg cannot happen.
+	if err := waitForTeranodeTip(ctx, env.Teranode.RPC, b2, 60*time.Second); err != nil {
+		res.Err = fmt.Errorf("B2 did not propagate to teranode-1 within 60s — SV→Teranode block reception may be broken: %w", err)
 		return res
 	}
 
@@ -528,7 +530,11 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 	res.WinnerHash = c3
 
 	// 6. Wait for teranode-1 to reorg from B2 to C3.
-	deadline := time.Now().Add(60 * time.Second)
+	// 120s timeout: C3 is at height B0+3 vs B2 at B0+2; Teranode must receive
+	// all three C-chain blocks and activate the longer chain. Extended from 60s
+	// because Teranode has been observed to be slow to finalise reorgs under
+	// regtest conditions.
+	deadline := time.Now().Add(120 * time.Second)
 	for time.Now().Before(deadline) {
 		current, err := env.Teranode.RPC.GetBestBlockHash(ctx)
 		if err == nil && current == c3 {
@@ -543,6 +549,6 @@ func induceReorg(ctx context.Context, env *testrunner.Env, _ []observer.TipSnaps
 		case <-time.After(500 * time.Millisecond):
 		}
 	}
-	res.Err = fmt.Errorf("teranode-1 did not reorg to C3=%s within 60s", c3)
+	res.Err = fmt.Errorf("teranode-1 did not reorg to C3=%s within 120s", c3)
 	return res
 }

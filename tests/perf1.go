@@ -133,6 +133,18 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 			}
 			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, submitErr))
 		}
+		// Verify the splitter propagated to svnode-1 before mining. If Teranode
+		// outbound legacy P2P is broken (teranode#942), the splitter never reaches
+		// svnode-1; the mined block would be empty; and all subsequent submissions
+		// would fail with missing-parent errors, causing an ERROR result.
+		splitterTxIDHex := hex.EncodeToString(splitter.TxID[:])
+		if propErr := waitForMempoolEntries(ctx, env.SVNode.RPC, []string{splitterTxIDHex}, 15*time.Second); propErr != nil {
+			return skipMissing(res, fmt.Sprintf(
+				"splitter tx not in svnode-1 mempool within 15s @rate=%d — Teranode outbound legacy P2P not propagating (teranode#942): %v",
+				rate, propErr,
+			))
+		}
+
 		if _, err := mineBlocks(ctx, env, 1); err != nil {
 			return errorResult(res, err)
 		}

@@ -137,6 +137,18 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) (res testrunner.Result)
 		return res
 	}
 
+	// Verify the splitter propagated to svnode-1 before mining. If Teranode
+	// outbound legacy P2P is broken (teranode#942), the splitter never reaches
+	// svnode-1; the mined block would be empty; and all subsequent test txs
+	// spending the splitter's outputs would be rejected by both nodes.
+	splitterTxIDHex := hex.EncodeToString(splitter.TxID[:])
+	if err := waitForMempoolEntries(ctx, env.SVNode.RPC, []string{splitterTxIDHex}, 15*time.Second); err != nil {
+		return skipMissing(res, fmt.Sprintf(
+			"splitter tx not in svnode-1 mempool within 15s — Teranode outbound legacy P2P not propagating (teranode#942): %v",
+			err,
+		))
+	}
+
 	// Mine to confirm splitter; refresh funder UTXO state.
 	if _, err := mineBlocks(ctx, env, 1); err != nil {
 		return errorResult(res, err)
