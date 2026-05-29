@@ -290,15 +290,22 @@ func parseStandardBlock(blockBytes []byte) ([]string, error) {
 		return nil, fmt.Errorf("block too short: %d bytes", len(blockBytes))
 	}
 	// Detect P2P wire frame by checking for any of the BSV network magic
-	// values at offset 0 (mainnet/testnet/regtest/STN). Teranode emits the
-	// mainnet magic regardless of network.
+	// values at offset 0. Teranode emits mainnet magic regardless of network.
+	//
+	// Magic bytes are written as uint32 little-endian (binary.Write LE) in
+	// p2p_probe.go. The expected on-wire byte order for each network is:
+	//   mainnet     0xe8f3e1e3 → e3 e1 f3 e8
+	//   regtest     0xfabfb5da → da b5 bf fa
+	//   testnet     0xf4f3e5f4 → f4 e5 f3 f4
+	//   teratestnet 0x0c09010d → 0d 01 09 0c
 	headerStart := 0
 	if len(blockBytes) >= 88 {
 		first4 := blockBytes[:4]
 		switch {
-		case first4[0] == 0xf9 && first4[1] == 0xbe && first4[2] == 0xb4 && first4[3] == 0xd9, // mainnet
-			first4[0] == 0xfa && first4[1] == 0xbf && first4[2] == 0xb5 && first4[3] == 0xda, // regtest
-			first4[0] == 0x0b && first4[1] == 0x11 && first4[2] == 0x09 && first4[3] == 0x07: // testnet
+		case first4[0] == 0xe3 && first4[1] == 0xe1 && first4[2] == 0xf3 && first4[3] == 0xe8, // BSV mainnet
+			first4[0] == 0xda && first4[1] == 0xb5 && first4[2] == 0xbf && first4[3] == 0xfa, // BSV regtest
+			first4[0] == 0xf4 && first4[1] == 0xe5 && first4[2] == 0xf3 && first4[3] == 0xf4, // BSV testnet
+			first4[0] == 0x0d && first4[1] == 0x01 && first4[2] == 0x09 && first4[3] == 0x0c: // BSV teratestnet
 			headerStart = 8 // skip 4 magic + 4 size
 		}
 	}
