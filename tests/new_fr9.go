@@ -156,6 +156,17 @@ afterWait:
 		res.Observations["notification"] = *matched
 	}
 
+	// Wait for tx1 to propagate to svnode-1 before mining. Without this,
+	// svnode-1 mines an empty block (Teranode→svnode outbound legacy P2P is
+	// unreliable; teranode#942), and "tx1 in mined block" would always fail.
+	// Best-effort: use the same DefaultPropagation window as other tests.
+	tx1Hex := hex.EncodeToString(tx1.TxID[:])
+	propagation := env.Cfg.Durations.DefaultPropagation
+	if propagation <= 0 {
+		propagation = 10 * time.Second
+	}
+	_, _ = pollMempoolUntil(ctx, env.SVNode.RPC, []string{tx1Hex}, propagation)
+
 	// Mine; verify tx1 is the one mined.
 	mined, err := mineBlocks(ctx, env, 1)
 	if err != nil || len(mined) != 1 {
@@ -173,7 +184,6 @@ afterWait:
 			))
 		} else {
 			ids, _ := parseStandardBlock(blockBytes)
-			tx1Hex := hex.EncodeToString(tx1.TxID[:])
 			tx1Mined := false
 			for _, id := range ids {
 				if id == tx1Hex || id == tx1Returned {

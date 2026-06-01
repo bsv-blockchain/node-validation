@@ -289,20 +289,26 @@ func parseStandardBlock(blockBytes []byte) ([]string, error) {
 	if len(blockBytes) < 81 {
 		return nil, fmt.Errorf("block too short: %d bytes", len(blockBytes))
 	}
-	// Detect P2P wire frame by checking for any of the BSV network magic
-	// values at offset 0. Teranode emits mainnet magic regardless of network.
+	// Detect P2P wire frame by checking for known network magic values at
+	// offset 0.
 	//
-	// Magic bytes are written as uint32 little-endian (binary.Write LE) in
-	// p2p_probe.go. The expected on-wire byte order for each network is:
-	//   mainnet     0xe8f3e1e3 → e3 e1 f3 e8
-	//   regtest     0xfabfb5da → da b5 bf fa
-	//   testnet     0xf4f3e5f4 → f4 e5 f3 f4
-	//   teratestnet 0x0c09010d → 0d 01 09 0c
+	// Empirically, Teranode's /api/v1/block_legacy/{hash} REST endpoint
+	// returns blocks prefixed with the Bitcoin legacy (BTC) mainnet magic
+	// 0xf9beb4d9 (on-wire: f9 be b4 d9) regardless of the running network.
+	// The BSV-specific magic values are retained for completeness.
+	//
+	// Magic bytes are written as uint32 little-endian; on-wire byte order:
+	//   BTC mainnet / Teranode 0xd9b4bef9 → f9 be b4 d9  ← actual Teranode REST emission
+	//   BSV mainnet            0xe8f3e1e3 → e3 e1 f3 e8
+	//   BSV regtest            0xfabfb5da → da b5 bf fa
+	//   BSV testnet            0xf4f3e5f4 → f4 e5 f3 f4
+	//   BSV teratestnet        0x0c09010d → 0d 01 09 0c
 	headerStart := 0
 	if len(blockBytes) >= 88 {
 		first4 := blockBytes[:4]
 		switch {
-		case first4[0] == 0xe3 && first4[1] == 0xe1 && first4[2] == 0xf3 && first4[3] == 0xe8, // BSV mainnet
+		case first4[0] == 0xf9 && first4[1] == 0xbe && first4[2] == 0xb4 && first4[3] == 0xd9, // BTC mainnet (actual Teranode REST emission)
+			first4[0] == 0xe3 && first4[1] == 0xe1 && first4[2] == 0xf3 && first4[3] == 0xe8, // BSV mainnet
 			first4[0] == 0xda && first4[1] == 0xb5 && first4[2] == 0xbf && first4[3] == 0xfa, // BSV regtest
 			first4[0] == 0xf4 && first4[1] == 0xe5 && first4[2] == 0xf3 && first4[3] == 0xf4, // BSV testnet
 			first4[0] == 0x0d && first4[1] == 0x01 && first4[2] == 0x09 && first4[3] == 0x0c: // BSV teratestnet
