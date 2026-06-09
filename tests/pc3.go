@@ -218,7 +218,15 @@ func RunPC3(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 // submitAndConfirm submits a built tx via Teranode RPC, fetches it back via REST,
 // verifies the round-trip, and (on success) marks the funder's inputs spent and
-// the change UTXO available. Appends acceptance checks to res.
+// the change UTXO available (in-memory only). Appends acceptance checks to res.
+//
+// It deliberately does NOT mine a block here. PC-3 submits all three shapes as
+// a chain of unconfirmed txs (each spends the previous tx's change output),
+// then — after every submission — waits for all three to land together in
+// svnode-1's mempool and mines a single block so all three are confirmed in
+// that one block. Mining per submission would scatter the txs across separate
+// blocks and drain the mempool between calls, breaking both the collective
+// mempool check and the "final block contains all 3" assertion.
 func submitAndConfirm(
 	ctx context.Context,
 	env *testrunner.Env,
@@ -266,11 +274,12 @@ func submitAndConfirm(
 		fmt.Sprintf("err=%v", err),
 	))
 
-	// Mine 1 block to confirm this tx on-chain so the next call (which may
-	// spend the change UTXO via the shared funder) finds the parent in
-	// storage rather than in the unconfirmed mempool. See helper.go on
-	// confirmAndMine for why bare funder.Confirm is unsafe here.
-	_ = confirmAndMine(ctx, env, returnedTxid, bres.Inputs, bres.Change)
+	// Update the funder's UTXO view in-memory only (mark inputs spent, add the
+	// change UTXO) so the next shape can chain off this tx's change output.
+	// Do NOT mine here — the caller mines a single block once all three txs are
+	// in svnode-1's mempool so they all land in the same block. Teranode and
+	// svnode-1 accept the chained unconfirmed parent from their mempools.
+	env.TxGen.Confirm(bres.Inputs, bres.Change)
 	*txs = append(*txs, builtTx{shape: shape, expected: bres.TxID, txid: returnedTxid})
 	return nil
 }
