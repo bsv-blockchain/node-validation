@@ -156,10 +156,13 @@ afterWait:
 		res.Observations["notification"] = *matched
 	}
 
-	// Wait for tx1 to propagate to svnode-1 before mining. Without this,
-	// svnode-1 mines an empty block (Teranode→svnode outbound legacy P2P is
-	// unreliable; teranode#942), and "tx1 in mined block" would always fail.
-	// Best-effort: use the same DefaultPropagation window as other tests.
+	// Wait for tx1 to propagate to svnode-1 before mining. svnode-1 owns the
+	// regtest wallet and mines the confirming block, so it must have tx1 in
+	// its mempool first; otherwise it mines an empty block and "tx1 in mined
+	// block" fails. tx1 is an ordinary inline tx, which propagates
+	// Teranode→svnode-1 over legacy P2P fine (see PC-3) — this is just a
+	// timing wait. Best-effort: use the same DefaultPropagation window as
+	// other tests.
 	tx1Hex := hex.EncodeToString(tx1.TxID[:])
 	propagation := env.Cfg.Durations.DefaultPropagation
 	if propagation <= 0 {
