@@ -40,13 +40,21 @@ func TestTestCases(t *testing.T) {
 
 func TestInScopeTestIDs(t *testing.T) {
 	ids := Load().InScopeTestIDs()
-	// 11 in-scope source TCs + 8 NEW = 19.
-	if len(ids) != 19 {
-		t.Errorf("InScopeTestIDs: want 19, got %d (%v)", len(ids), ids)
+	// 11 in-scope source TCs + 7 in-scope NEW = 18.
+	// NEW-FR8 is RESOLVED_EXTERNAL (covered by Arcade / Arc) and excluded.
+	if len(ids) != 18 {
+		t.Errorf("InScopeTestIDs: want 18, got %d (%v)", len(ids), ids)
+	}
+	for _, notWant := range []string{"NEW-FR8"} {
+		for _, id := range ids {
+			if id == notWant {
+				t.Errorf("InScopeTestIDs should not include retired %s", notWant)
+			}
+		}
 	}
 	for _, want := range []string{"PC-1", "PC-2", "PC-3", "IBD-2", "PERF-1", "INTER-1", "INTER-2",
 		"CLIENT-1", "CLIENT-2", "CLIENT-3", "OPS-3",
-		"NEW-FR7", "NEW-FR8", "NEW-FR9", "NEW-FR10", "NEW-FR11",
+		"NEW-FR7", "NEW-FR9", "NEW-FR10", "NEW-FR11",
 		"NEW-NFR7", "NEW-NFR11", "NEW-NFR13"} {
 		found := false
 		for _, id := range ids {

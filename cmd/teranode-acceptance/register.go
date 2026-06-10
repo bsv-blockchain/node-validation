@@ -19,7 +19,9 @@ func registerTests(suite *testrunner.Suite) {
 	suite.Register("NEW-FR10", tests.RunNEWFR10)
 	suite.Register("NEW-FR11", tests.RunNEWFR11)
 	suite.Register("NEW-FR7", tests.RunNEWFR7)
-	suite.Register("NEW-FR8", tests.RunNEWFR8)
+	// NEW-FR8 retired: FR-8 (fee estimation) is covered externally by
+	// Arcade / Arc, not the Teranode RPC. Marked RESOLVED_EXTERNAL in the
+	// manifest and intentionally not registered. See tests/new_fr8.go.
 	suite.Register("NEW-FR9", tests.RunNEWFR9)
 	suite.Register("NEW-NFR11", tests.RunNEWNFR11)
 	suite.Register("NEW-NFR13", tests.RunNEWNFR13)

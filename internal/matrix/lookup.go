@@ -44,11 +44,13 @@ func (m Manifest) TestCases() []Entry {
 	return out
 }
 
-// InScopeTestIDs returns IDs of TC entries with status IN_SCOPE plus all NEW entries.
+// InScopeTestIDs returns IDs of TC and NEW entries with status IN_SCOPE.
+// Excluded or externally-resolved entries (e.g. RESOLVED_EXTERNAL) are
+// omitted so the suite never registers or runs them.
 func (m Manifest) InScopeTestIDs() []string {
 	var out []string
 	for _, e := range m.Entries {
-		if (e.Kind == KindTC && e.TestCaseStatus == TCInScope) || e.Kind == KindNEW {
+		if (e.Kind == KindTC || e.Kind == KindNEW) && e.TestCaseStatus == TCInScope {
 			out = append(out, e.ID)
 		}
 	}

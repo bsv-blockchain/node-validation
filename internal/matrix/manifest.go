@@ -54,8 +54,9 @@ func manifest() Manifest {
 		{
 			ID: "FR-8", Kind: KindFR,
 			Title:          "Transaction Fee Estimation",
-			CoverageStatus: CoverageAutomated,
-			CoveredBy:      []string{"NEW-FR8"},
+			CoverageStatus: CoverageExternal,
+			CoveredBy:      []string{},
+			Notes:          "Covered by Arcade / Arc. Fee estimation is provided by the external Arc/Arcade solution, not the Teranode estimatefee RPC; not validated by this harness.",
 		},
 		{
 			ID: "FR-9", Kind: KindFR,
@@ -279,8 +280,9 @@ func manifest() Manifest {
 		},
 		{
 			ID: "NEW-FR8", Kind: KindNEW, Title: "Fee Estimation Endpoint Validation",
-			TestCaseStatus: TCInScope, Severity: SeverityAdvisory,
-			SatisfiesReqs: []string{"FR-8"},
+			TestCaseStatus: TCResolvedExternal, Severity: SeverityAdvisory,
+			SatisfiesReqs:   []string{"FR-8"},
+			ExclusionReason: "Covered by Arcade / Arc — fee estimation is provided by the external Arc/Arcade solution, not the Teranode estimatefee RPC (which returns ErrRPCUnimplemented). Retired from the suite; no longer registered or executed.",
 		},
 		{
 			ID: "NEW-FR9", Kind: KindNEW, Title: "Double-Spend Detection Behaviour",

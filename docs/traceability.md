@@ -13,7 +13,7 @@
 | FR-5 | Reliable Transaction Propagation | `AUTOMATED` | INTER-2, CLIENT-1 |  |
 | FR-6 | Block and Transaction Notification Reliability | `AUTOMATED` | CLIENT-1, CLIENT-3 |  |
 | FR-7 | Support for Unconfirmed Transaction Chains | `AUTOMATED` | NEW-FR7 |  |
-| FR-8 | Transaction Fee Estimation | `AUTOMATED` | NEW-FR8 |  |
+| FR-8 | Transaction Fee Estimation | `COVERED_EXTERNALLY` |  | Covered by Arcade / Arc. Fee estimation is provided by the external Arc/Arcade solution, not the Teranode estimatefee RPC; not validated by this harness. |
 | FR-9 | Double-Spend Detection and Notification | `AUTOMATED` | NEW-FR9 |  |
 | FR-10 | Historical Data Access | `AUTOMATED` | NEW-FR10 |  |
 | FR-11 | Mempool Query and Filtering | `AUTOMATED` | NEW-FR11 |  |
