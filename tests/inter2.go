@@ -137,14 +137,20 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) (res testrunner.Result)
 		return res
 	}
 
-	// Verify the splitter propagated to svnode-1 before mining. If Teranode
-	// outbound legacy P2P is broken (teranode#942), the splitter never reaches
-	// svnode-1; the mined block would be empty; and all subsequent test txs
-	// spending the splitter's outputs would be rejected by both nodes.
+	// Verify the splitter propagated to svnode-1 before mining. The splitter is a
+	// high-fan-out "external" tx (its bytes are offloaded to the UTXO external
+	// store), so for Teranode to serve it to svnode-1 over legacy P2P the external
+	// store must be a real, persistent blob store. This used to skip with
+	// externalStore=null:/// in the compose config, which discarded the bytes:
+	// svnode-1 requested the tx and Teranode answered GetTxFromExternalStore
+	// NOT_FOUND, so the splitter never reached svnode-1's mempool. That is now
+	// fixed (externalStore=file://...); if this still times out, the splitter (an
+	// external tx) is not being served — check the external store wiring/volume,
+	// not ordinary outbound P2P (small inline txs propagate fine, see PC-3).
 	splitterTxIDHex := hex.EncodeToString(splitter.TxID[:])
 	if err := waitForMempoolEntries(ctx, env.SVNode.RPC, []string{splitterTxIDHex}, 15*time.Second); err != nil {
 		return skipMissing(res, fmt.Sprintf(
-			"splitter tx not in svnode-1 mempool within 15s — Teranode outbound legacy P2P not propagating (teranode#942): %v",
+			"splitter (external) tx not in svnode-1 mempool within 15s — UTXO external store not serving external txs over legacy P2P (check externalStore wiring, not ordinary outbound P2P): %v",
 			err,
 		))
 	}

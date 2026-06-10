@@ -111,6 +111,10 @@ services:
       kafka_txmetaConfig:          "kafka://kafka:9092/teranode1-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
+      # Writable blob store backing utxostore externalStore=file:///app/data/external.
+      # External (large/many-output) txs offload their raw bytes here; without a real
+      # store they cannot be served to legacy P2P peers (see settings.docker.conf).
+      - teranode1-external:/app/data/external
     networks: [tng-net]
 
   teranode-2:
@@ -147,6 +151,7 @@ services:
       kafka_txmetaConfig:          "kafka://kafka:9092/teranode2-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
+      - teranode2-external:/app/data/external
     networks: [tng-net]
 
   teranode-3:
@@ -183,6 +188,7 @@ services:
       kafka_txmetaConfig:          "kafka://kafka:9092/teranode3-txmeta?partitions=8&replication=1&retention=60000&flush_bytes=1024&flush_messages=10000&flush_frequency=1s"
     volumes:
       - ./teranode/settings.docker.conf:/app/settings_local.conf:ro
+      - teranode3-external:/app/data/external
     networks: [tng-net]
 
   # ---------- Observability ----------
@@ -259,3 +265,10 @@ services:
 networks:
   tng-net:
     driver: bridge
+
+volumes:
+  # Per-node writable blob stores for the UTXO external store (large/many-output
+  # txs). Distinct named volumes keep the three nodes isolated.
+  teranode1-external:
+  teranode2-external:
+  teranode3-external:
