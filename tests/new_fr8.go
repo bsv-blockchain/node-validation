@@ -2,6 +2,13 @@
 //
 // Source: derived from FR-8.
 //
+// Status: RETIRED. FR-8 (transaction fee estimation) is covered externally
+// by Arcade / Arc, not by the Teranode RPC, so this is not a valid test for
+// this harness. The manifest marks NEW-FR8 as RESOLVED_EXTERNAL and the test
+// is no longer registered in cmd/teranode-acceptance/register.go, so RunNEWFR8
+// is not executed in a normal run. The implementation is retained for
+// reference only.
+//
 // Objective:
 //
 //	Verify Teranode exposes a fee estimation API and that its predictions

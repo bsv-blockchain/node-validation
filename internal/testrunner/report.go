@@ -169,7 +169,7 @@ func requirementRow(e matrix.Entry, results map[string]Result, ovr overrides.Fil
 		PartialNote:  e.PartialNote,
 	}
 	switch e.CoverageStatus {
-	case matrix.CoverageContractual, matrix.CoverageLongTermObservation, matrix.CoverageDocumentationReview, matrix.CoveragePrivilegedAccess:
+	case matrix.CoverageContractual, matrix.CoverageLongTermObservation, matrix.CoverageDocumentationReview, matrix.CoveragePrivilegedAccess, matrix.CoverageExternal:
 		if o, ok := ovr.Overrides[e.ID]; ok {
 			row.ResultStatus = string(o.Decision)
 		} else {

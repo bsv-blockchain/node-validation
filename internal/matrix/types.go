@@ -25,6 +25,10 @@ const (
 	CoverageLongTermObservation CoverageStatus = "LONG_TERM_OBSERVATION"
 	CoveragePrivilegedAccess    CoverageStatus = "PRIVILEGED_ACCESS_REQUIRED"
 	CoveragePartial             CoverageStatus = "PARTIAL"
+	// CoverageExternal marks a requirement that is satisfied by a separate
+	// solution outside this harness (e.g. Arcade / Arc), so it is neither
+	// automated here nor pending a reviewer override.
+	CoverageExternal CoverageStatus = "COVERED_EXTERNALLY"
 )
 
 // TestCaseStatus describes a TC or NEW row's relationship to the suite.
@@ -35,6 +39,11 @@ const (
 	TCExcludedSetup         TestCaseStatus = "EXCLUDED_SETUP"
 	TCExcludedDocumentation TestCaseStatus = "EXCLUDED_DOCUMENTATION"
 	TCExcludedPrivileged    TestCaseStatus = "EXCLUDED_PRIVILEGED"
+	// TCResolvedExternal marks a test case whose requirement is covered by a
+	// separate solution (e.g. Arcade / Arc). The case is retired from the
+	// suite: it is not registered or executed, and ExclusionReason records
+	// the external attribution.
+	TCResolvedExternal TestCaseStatus = "RESOLVED_EXTERNAL"
 )
 
 // Severity assigns a TC or NEW row to a verdict tier per source plan §"Critical/Important".

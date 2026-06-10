@@ -133,7 +133,7 @@ func (m Manifest) Validate() error {
 			errs = append(errs, fmt.Sprintf("%s: test-case status must be empty for kind %s", e.ID, e.Kind))
 		}
 		switch e.TestCaseStatus {
-		case TCExcludedSetup, TCExcludedDocumentation, TCExcludedPrivileged:
+		case TCExcludedSetup, TCExcludedDocumentation, TCExcludedPrivileged, TCResolvedExternal:
 			if e.ExclusionReason == "" {
 				errs = append(errs, fmt.Sprintf("%s: exclusion reason required for status %s", e.ID, e.TestCaseStatus))
 			}

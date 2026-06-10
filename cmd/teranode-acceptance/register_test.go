@@ -13,19 +13,26 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/testrunner"
 )
 
-func TestRegisterTests_SP9RegistersNineteen(t *testing.T) {
+func TestRegisterTests_SP9RegistersEighteen(t *testing.T) {
 	cfg := config.Config{TestTimeout: time.Minute}
 	env := testrunner.NewEnv(cfg, slog.New(slog.NewTextHandler(os.Stderr, nil)), matrix.Load(), nil)
 	suite := testrunner.NewSuite(env)
 	registerTests(suite)
 	results := suite.Run(testContext(t))
-	if len(results) != 19 {
-		t.Fatalf("expected 19 results, got %d", len(results))
+	// NEW-FR8 is retired (RESOLVED_EXTERNAL, covered by Arcade / Arc) and not
+	// registered, so 18 tests run rather than 19.
+	if len(results) != 18 {
+		t.Fatalf("expected 18 results, got %d", len(results))
+	}
+	for _, r := range results {
+		if r.ID == "NEW-FR8" {
+			t.Errorf("NEW-FR8 should not be registered (retired, covered by Arcade / Arc)")
+		}
 	}
 	want := map[string]bool{
 		"CLIENT-1": false, "CLIENT-2": false, "CLIENT-3": false,
 		"IBD-2": false, "INTER-1": false, "INTER-2": false,
-		"NEW-FR7": false, "NEW-FR8": false, "NEW-FR9": false,
+		"NEW-FR7": false, "NEW-FR9": false,
 		"NEW-FR10": false, "NEW-FR11": false,
 		"NEW-NFR7": false, "NEW-NFR11": false, "NEW-NFR13": false,
 		"OPS-3": false, "PC-1": false, "PC-2": false, "PC-3": false,
