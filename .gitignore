@@ -3,6 +3,7 @@ report.json
 report.html
 report.short.json
 report.short.html
+chaos-report.json
 coverage.out
 coverage.html
 config.yaml

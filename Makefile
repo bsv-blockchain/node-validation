@@ -6,6 +6,7 @@ LDFLAGS := -X main.version=$(shell git describe --tags --always --dirty 2>/dev/n
 
 build:
 	$(GO) build -ldflags "$(LDFLAGS)" -o bin/teranode-acceptance ./cmd/teranode-acceptance
+	$(GO) build -ldflags "$(LDFLAGS)" -o bin/teranode-chaos ./cmd/teranode-chaos
 	$(GO) build -o bin/gen-traceability ./cmd/gen-traceability
 	$(GO) build -o bin/derive-address ./cmd/derive-address
 	$(GO) build -o bin/gen-fixtures ./cmd/gen-fixtures
@@ -66,5 +67,15 @@ compose-logs:
 
 compose-test: compose-up
 	./bin/teranode-acceptance --short --config config.docker.yaml || true
+
+# Privileged, NON-GATING chaos suite (OPS-1 service failure, OPS-2 network
+# partition). Requires the docker mesh to be up and healthy (`make compose-up`,
+# confirm with `docker ps`). It is destructive (kills/partitions containers)
+# but self-heals the mesh after each test. Results are written to a separate
+# scorecard (stdout + chaos-report.json) and NEVER affect the acceptance
+# verdict — OPS-1/OPS-2 stay EXCLUDED_PRIVILEGED in the acceptance matrix.
+.PHONY: chaos
+chaos: build
+	./bin/teranode-chaos --config config.docker.yaml
 
 compose-reset: compose-down
