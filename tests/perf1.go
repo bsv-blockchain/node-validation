@@ -98,16 +98,17 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 
 	for _, rate := range ramp {
 		txCount := rate * int(perRate.Seconds())
-		// Bootstrap + splitter for txCount UTXOs.
+		// Bootstrap a fresh funding UTXO for this rate's splitter. We Reset the
+		// funder first: the previous rate's load phase spent its splitter outputs
+		// on-chain (via pinned SpendUTXO) but those spends are NOT reflected in the
+		// funder's in-memory UTXO set, so carrying state forward would let
+		// BuildSplitter select already-spent UTXOs and fail with UTXO_SPENT on
+		// submit. Each rate therefore starts from a single clean confirmed UTXO —
+		// matching the "bootstrap funder + splitter" method described above.
 		target := uint64(txCount) * 100_000 * 2
-		if funder.Balance() < target {
-			if _, err := bootstrapConfirmed(ctx, env, target); err != nil {
-				return errorResult(res, fmt.Errorf("bootstrap @rate %d: %w", rate, err))
-			}
-			if _, err := mineBlocks(ctx, env, 1); err != nil {
-				return errorResult(res, err)
-			}
-			time.Sleep(2 * time.Second)
+		funder.Reset()
+		if _, err := bootstrapConfirmed(ctx, env, target); err != nil {
+			return errorResult(res, fmt.Errorf("bootstrap @rate %d: %w", rate, err))
 		}
 		splitter, err := funder.Builder().BuildSplitter(txCount, 100_000, 500)
 		if err != nil {
@@ -133,14 +134,21 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 			}
 			return errorResult(res, fmt.Errorf("submit splitter @rate %d: %w", rate, submitErr))
 		}
-		// Verify the splitter propagated to svnode-1 before mining. If Teranode
-		// outbound legacy P2P is broken (teranode#942), the splitter never reaches
-		// svnode-1; the mined block would be empty; and all subsequent submissions
-		// would fail with missing-parent errors, causing an ERROR result.
+		// Verify the splitter propagated to svnode-1 before mining. The splitter is
+		// a high-fan-out "external" tx (its bytes are offloaded to the UTXO external
+		// store), so for Teranode to serve it to svnode-1 over legacy P2P the
+		// external store must be a real, persistent blob store. This used to skip
+		// with externalStore=null:/// in the compose config, which discarded the
+		// bytes: svnode-1 requested the tx and Teranode answered
+		// GetTxFromExternalStore NOT_FOUND, so the splitter never reached svnode-1's
+		// mempool. That is now fixed (externalStore=file://...); if this still times
+		// out, the splitter (an external tx) is not being served — check the external
+		// store wiring/volume, not ordinary outbound P2P (small inline txs propagate
+		// fine, see PC-3).
 		splitterTxIDHex := hex.EncodeToString(splitter.TxID[:])
 		if propErr := waitForMempoolEntries(ctx, env.SVNode.RPC, []string{splitterTxIDHex}, 15*time.Second); propErr != nil {
 			return skipMissing(res, fmt.Sprintf(
-				"splitter tx not in svnode-1 mempool within 15s @rate=%d — Teranode outbound legacy P2P not propagating (teranode#942): %v",
+				"splitter (external) tx not in svnode-1 mempool within 15s @rate=%d — UTXO external store not serving external txs over legacy P2P (check externalStore wiring, not ordinary outbound P2P): %v",
 				rate, propErr,
 			))
 		}
