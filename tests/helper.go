@@ -19,16 +19,31 @@ import (
 	"github.com/bsv-blockchain/node-validation/internal/txgen"
 )
 
+// bootstrapTipWait is how long the per-test bootstrap / post-submit mine
+// helpers wait for a block mined on svnode-1 to become Teranode's chain tip.
+//
+// This was 30s, which proved too tight: under full-suite load Teranode can
+// take longer than 30s to receive a freshly-mined block over legacy P2P and
+// activate it as its tip, intermittently erroring tests (observed as CLIENT-2
+// "teranode tip never reached <hash> within 30s"). SV→Teranode block
+// reception is reliable but not instantaneous under load, so the wait is
+// lengthened to 90s. This does not mask real failures: waitForTeranodeTip
+// polls every 500ms and returns the instant the tip matches, so the happy
+// path is unaffected; a genuinely stuck tip still fails, just with enough
+// headroom to ride out transient propagation latency. The value sits in the
+// same 60–120s band induceReorg already uses for SV→Teranode block reception.
+const bootstrapTipWait = 90 * time.Second
+
 // mempoolReader is satisfied by both *teranode.RPCClient and *svnode.RPCClient,
 // which both expose GetRawMempool(ctx) ([]string, error) with the same shape.
 type mempoolReader interface {
 	GetRawMempool(ctx context.Context) ([]string, error)
 }
 
-// restoreFunderOnNonPass returns a deferred cleanup that clears the funder
-// if the test does not end up PASS. Use it via:
+// resetFunderAfter returns a deferred cleanup that ALWAYS clears the funder,
+// regardless of the test's final status. Use it via:
 //
-//	defer restoreFunderOnNonPass(funder, &res)()
+//	defer resetFunderAfter(funder)()
 //
 // Required for tests that call funder.Reset() / ConfirmMulti() to pivot to a
 // splitter mid-test (INTER-2, PERF-1, CLIENT-3): if the test SKIPs or FAILs
@@ -39,21 +54,23 @@ type mempoolReader interface {
 // the splitter over legacy P2P). Subsequent tests would then fail referencing
 // those phantom parents.
 //
-// A previous version of this helper snapshot+restored the pre-test UTXO
-// set, but that puts back UTXOs that the test's own (successful)
-// submissions may already have spent on chain — leading to "UTXO already
-// spent" errors downstream. Just clearing the funder is correct: every
-// test that needs UTXOs guards with `if funder.Balance() < N {
-// bootstrapConfirmed(...) }`, so a reset just forces fresh bootstrap.
+// A previous version (restoreFunderOnNonPass) reset only on non-PASS, on the
+// assumption that a PASSing test left the funder in a consistent state. That
+// assumption is wrong for these splitter tests: on PASS they leaked a funder
+// full of phantom (already-spent) splitter UTXOs into the shared env.TxGen.
+// The next funder-using test (e.g. NEW-FR7, PC-3, CLIENT-2) then saw a high
+// balance, skipped its `if funder.Balance() < N { bootstrapConfirmed(...) }`
+// guard, and SelectInputs handed it an already-spent output — Teranode
+// rejected the submit with UTXO_SPENT (70). The collision only surfaced in
+// the full suite's combined ordering (a splitter test running before the
+// victims), never in isolation.
 //
-// Callers MUST use named returns so the deferred function reads the final
-// res.Status assigned by deriveStatus or skip/error helpers.
-func restoreFunderOnNonPass(funder *txgen.Funder, res *testrunner.Result) func() {
+// Clearing unconditionally is correct and isolates funder UTXOs across the
+// whole run: every funder-using test guards with bootstrapConfirmed, so a
+// reset simply forces the next test to start from a fresh confirmed UTXO.
+func resetFunderAfter(funder *txgen.Funder) func() {
 	return func() {
-		if res == nil {
-			return
-		}
-		if res.Status == testrunner.StatusPass {
+		if funder == nil {
 			return
 		}
 		funder.Reset()
@@ -224,7 +241,7 @@ func mineAfterSubmit(ctx context.Context, env *testrunner.Env, _ ...string) erro
 		return err
 	}
 	if env.Teranode != nil && env.Teranode.RPC != nil && len(hashes) > 0 {
-		return waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], 30*time.Second)
+		return waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], bootstrapTipWait)
 	}
 	return nil
 }
@@ -247,7 +264,8 @@ func confirmAndMine(ctx context.Context, env *testrunner.Env, txid string, spent
 // Procedure:
 //  1. Call funder.Bootstrap(ctx, satoshis) → creates funding tx in svnode-1 mempool.
 //  2. Mine 1 block on svnode-1 to confirm the funding tx.
-//  3. Wait for Teranode-1's tip to reach that mined block (max 30s).
+//  3. Wait for Teranode-1's tip to reach that mined block (max
+//     bootstrapTipWait).
 //
 // On any failure, returns a zero UTXO and the error.
 func bootstrapConfirmed(ctx context.Context, env *testrunner.Env, satoshis uint64) (txgen.UTXO, error) {
@@ -263,7 +281,7 @@ func bootstrapConfirmed(ctx context.Context, env *testrunner.Env, satoshis uint6
 		return txgen.UTXO{}, fmt.Errorf("expected 1 mined hash, got %d", len(hashes))
 	}
 	if env.Teranode != nil && env.Teranode.RPC != nil {
-		if err := waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], 30*time.Second); err != nil {
+		if err := waitForTeranodeTip(ctx, env.Teranode.RPC, hashes[0], bootstrapTipWait); err != nil {
 			return txgen.UTXO{}, fmt.Errorf("wait for teranode to receive bootstrap block: %w", err)
 		}
 		// Brief settling delay: after the tip advances, Teranode's UTXO store

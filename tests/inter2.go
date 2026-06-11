@@ -68,14 +68,16 @@ func RunINTER2(ctx context.Context, env *testrunner.Env) (res testrunner.Result)
 		return skipMissing(res, "client(s) not configured")
 	}
 
-	// Snapshot funder UTXOs and restore on any non-PASS exit. INTER-2 calls
-	// funder.Reset() + ConfirmMulti() to pivot the funder to the splitter's
-	// outputs; if the test SKIPs or FAILs after that point, the funder is
-	// left holding UTXOs whose parent tx may never have been confirmed
-	// (currently the case when the splitter is accepted by Teranode but
-	// doesn't propagate to svnode). Without this restore, every subsequent
-	// test that uses the funder fails with "error getting parent transaction".
-	defer restoreFunderOnNonPass(env.TxGen, &res)()
+	// Always clear the funder on exit. INTER-2 pivots the funder to the
+	// splitter's outputs via funder.Reset() + ConfirmMulti(), then spends
+	// those outputs on-chain via pinned SpendUTXO WITHOUT calling
+	// funder.Confirm — so on completion the funder still advertises the full
+	// splitter output set even though most are already spent on chain.
+	// Leaving that polluted set in the shared env.TxGen would make a later
+	// test (NEW-FR7, PC-3, CLIENT-2) select an already-spent output and fail
+	// with UTXO_SPENT (70). Resetting unconditionally forces the next test to
+	// bootstrap a fresh confirmed UTXO. See resetFunderAfter in helper.go.
+	defer resetFunderAfter(env.TxGen)()
 
 	count := env.Cfg.Limits.INTER2TxCount
 	if count <= 0 {
