@@ -58,9 +58,11 @@ func RunCLIENT3(ctx context.Context, env *testrunner.Env) (res testrunner.Result
 		return skipMissing(res, "client(s) not configured")
 	}
 
-	// See INTER-2 — funder is reset/repopulated mid-test; restore on
-	// non-PASS to avoid poisoning subsequent tests.
-	defer restoreFunderOnNonPass(env.TxGen, &res)()
+	// See INTER-2 — funder is reset/repopulated mid-test and its splitter
+	// outputs are spent on-chain via pinned SpendUTXO without funder.Confirm.
+	// Always clear the funder on exit so the leftover (already-spent) outputs
+	// never poison subsequent tests. See resetFunderAfter in helper.go.
+	defer resetFunderAfter(env.TxGen)()
 
 	count := env.Cfg.Limits.CLIENT3TxCount
 	if count <= 0 {
