@@ -45,13 +45,14 @@ type mempoolReader interface {
 //
 //	defer resetFunderAfter(funder)()
 //
-// Required for tests that pivot the shared funder to a splitter's outputs via
-// funder.Reset() + ConfirmMulti() and then spend those outputs on-chain using
-// pinned SpendUTXO in their load loop WITHOUT calling funder.Confirm
-// (INTER-2, PERF-1, CLIENT-3). Those spends are invisible to the funder's
-// in-memory UTXO set, so on completion the funder still advertises the full
-// splitter output set even though most of those outputs are already spent on
-// chain.
+// Required for tests that call funder.Reset() / ConfirmMulti() to pivot to a
+// splitter mid-test (INTER-2, PERF-1, CLIENT-3): if the test SKIPs or FAILs
+// part-way, the funder is left holding splitter-derived UTXOs whose parent
+// tx never reached the chain (the high-fan-out splitter is an "external" tx;
+// when the compose UTXO external store discarded those bytes — the old
+// externalStore=null:/// setting, fixed in #12 — svnode-1 could not fetch
+// the splitter over legacy P2P). Subsequent tests would then fail referencing
+// those phantom parents.
 //
 // A previous version (restoreFunderOnNonPass) reset only on non-PASS, on the
 // assumption that a PASSing test left the funder in a consistent state. That
@@ -215,16 +216,17 @@ func mineBlocks(ctx context.Context, env *testrunner.Env, n int) ([]string, erro
 
 // mineAfterSubmit mines 1 block on svnode-1 to advance the chain after a
 // test submits txs to Teranode and updates funder state. Best-effort: if
-// the Teranode-submitted tx hasn't propagated to SV (Teranode v0.15.1
-// outbound legacy P2P broadcast is broken — see teranode#942), the SV mine
-// will be empty and the tx stays unconfirmed.
+// the Teranode-submitted tx hasn't propagated to SV yet, the SV mine will be
+// empty and the tx stays unconfirmed. (Ordinary inline txs do propagate
+// Teranode→svnode-1 over legacy P2P — see PC-3; only high-fan-out "external"
+// txs depend on the UTXO external store being a real blob store, fixed in
+// #12.)
 //
-// We deliberately mine on SV rather than Teranode because Teranode-mined
-// blocks in v0.15.1 also don't propagate back to SV (same outbound P2P
-// bug surface), which creates a permanent chain divergence that wrecks
-// INTER-1's "Mixed-Network Consensus" test. Until Teranode fixes outbound
-// propagation, SV-side mining is the only path that keeps both chains in
-// sync — even though it means Teranode-only txs stay phantom.
+// We deliberately mine on svnode-1 (which carries the regtest wallet) rather
+// than Teranode: svnode-1 owns the coinbase/wallet, and mining from a single
+// authoritative miner keeps both chains converged on one tip, which is what
+// INTER-1's "Mixed-Network Consensus" test relies on. SV→Teranode block
+// reception is reliable, so the mined block reaches Teranode promptly.
 //
 // Procedure:
 //  1. svnode-1 getnewaddress → coinbase address
