@@ -73,6 +73,17 @@ FR-4 (`CoverageDocumentationReview` → DEFERRED) and IBD-1 (EXCLUDED_DOCUMENTAT
 reviewer-supplied `--reviewer-overrides` YAML referencing the BSVA IBD validation/audit evidence
 (decision **PASS**, with artefacts + note). **Once supplied, the verdict becomes GO.**
 
+### Supporting Evidence
+
+Code-level evidence supporting the FR-4 / IBD-1 documentation review is now captured in
+[`docs/ibd-fr4-evidence.md`](docs/ibd-fr4-evidence.md) — reviewed against upstream Teranode commit
+`3454bab`, with a Mermaid sequence diagram, pinned source permalinks for the FSM / catchup /
+block-validation / legacy-sync / UTXO-seeding / tip-commit paths, and a sign-off assessment of
+**PARTIAL — sufficient with caveats** (code-level capability evidence, *not* a BSVA mainnet IBD
+audit/run attestation). It supplies the artefacts and recommended `--reviewer-overrides` note a
+reviewer can cite, but does not by itself convert FR-4 / IBD-1 to a clean PASS — the reviewer's
+sign-off (and, if BSVA requires it, the formal IBD audit report) is still the gating step.
+
 ---
 
 ## Fix History That Got `main` to This State
