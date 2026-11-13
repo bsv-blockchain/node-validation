@@ -19,6 +19,7 @@
 // Acceptance criteria:
 //   - Median latency per rate within 20% of SV Node baseline.
 //   - p95 at highest tested rate ≤ 5× p95 at 100 TPS.
+//   - Submission error rate at each rate ≤ 1%, with at least one attempt.
 //   - Resource usage recorded.
 package tests
 
@@ -240,7 +241,7 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 
 		perRateResults = append(perRateResults, rateResult{
 			Rate:         rate,
-			Sent:         txCount,
+			Sent:         submitted + errored,
 			Submitted:    submitted,
 			Errored:      errored,
 			LatenciesP50: p50,
@@ -249,6 +250,9 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 	}
 
 	res.Observations["per_rate_results"] = perRateResults
+	for _, r := range perRateResults {
+		res.AcceptanceChecks = append(res.AcceptanceChecks, perf1ErrorRateCheck(r.Rate, r.Submitted, r.Errored))
+	}
 
 	// Acceptance: median latency at each rate "within 20% of SV Node baseline".
 	// Without a baseline run, we record the measurement and note the absence
@@ -295,4 +299,19 @@ func RunPERF1(ctx context.Context, env *testrunner.Env) (res testrunner.Result) 
 
 	res.Status = deriveStatus(res.AcceptanceChecks)
 	return res
+}
+
+// Use completed attempts rather than the planned transaction count: backpressure
+// can stop the submission loop before it reaches the requested count.
+func perf1ErrorRateCheck(rate, submitted, errored int) testrunner.Check {
+	attempted := submitted + errored
+	errorRate := 0.0
+	if attempted > 0 {
+		errorRate = float64(errored) / float64(attempted)
+	}
+	return required(
+		fmt.Sprintf("Submission error rate ≤ 1%% at %d TPS", rate),
+		attempted > 0 && errorRate <= 0.01,
+		fmt.Sprintf("attempted=%d submitted=%d errored=%d error_rate=%.4f", attempted, submitted, errored, errorRate),
+	)
 }

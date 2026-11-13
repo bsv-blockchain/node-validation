@@ -122,7 +122,7 @@ Each subsection covers one test ID. Statuses listed are those that can plausibly
 |---|---|---|
 | PASS | All configured TPS ramp steps (default [10, 50, 100, 250]) completed; p50 and p95 latency recorded | None |
 | FAIL ("p95 latency at 100 TPS: …ms > threshold") | At least one ramp step exceeded the p95 latency threshold | Lower `perf1_max_tps` in config.docker.yaml; this is a local docker constraint, not necessarily a Teranode defect |
-| FAIL ("error rate > 1% at … TPS") | Too many broadcast errors at the given TPS | Reduce `perf1_max_tps`; check Teranode RPC rate limits |
+| FAIL ("Submission error rate ≤ 1% at … TPS") | More than 1% of actual submission attempts failed, or no attempts completed | Reduce `perf1_max_tps`; check Teranode RPC rate limits |
 | FAIL ("ramp step … failed to complete") | A ramp step produced no successful transactions | Check TxGen wallet funding; check Teranode health |
 | ERROR | Harness or wallet failure during ramp | Check compose stack logs |
 | SKIPPED ("client(s) not configured") | Teranode RPC or TxGen not configured | Set both |

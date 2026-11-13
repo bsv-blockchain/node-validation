@@ -10,6 +10,26 @@
 
 ---
 
+## Interpretation limits identified by the audit
+
+The results below are a historical SHORT-mode run against v0.15.1, not release
+approval for a later Teranode build. The original reports and verdict are retained.
+
+Audit finding [5.1-TC-QG-002](https://github.com/heavymossman/audit-findings/issues/72)
+identified two false-pass paths in the harness used for those results:
+
+- PERF-1 did not enforce the documented submission error-rate limit of 1%.
+- NEW-FR10 allowed empty latency samples (and fast failed HTTP requests) to pass.
+
+The corrected harness enforces both checks. The historical PASS rows below do not
+establish that the corrected criteria passed; a new run is required for that claim.
+The FR-4 / IBD-1 reviewer sign-off also remains outstanding. No new acceptance run
+or BSVA sign-off is claimed by this correction. Release owners must retain the
+raw reports and record the exact Teranode version, tool commit, mode and reviewer
+evidence when they perform release acceptance.
+
+---
+
 ## Overall Verdict
 
 **INCOMPLETE — exit code 3**
@@ -71,7 +91,7 @@ FR-4 + IBD-1 documentation-review overrides — a human/BSVA sign-off, not test 
 
 FR-4 (`CoverageDocumentationReview` → DEFERRED) and IBD-1 (EXCLUDED_DOCUMENTATION) require a
 reviewer-supplied `--reviewer-overrides` YAML referencing the BSVA IBD validation/audit evidence
-(decision **PASS**, with artefacts + note). **Once supplied, the verdict becomes GO.**
+(decision **PASS**, with artefacts + note). For that recorded run, supplying PASS overrides would have produced GO under the then-current harness. This does not establish GO with the corrected checks above.
 
 ### Supporting Evidence
 

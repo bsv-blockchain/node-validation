@@ -22,7 +22,7 @@ make compose-down       # tears down (volumes wiped)
 
 Then read `report.html` in your browser and `report.json` for machine-readable output.
 
-The first run will exit with `INCOMPLETE` (exit code 3) — five documentation/contractual rows (IBD-1, FR-4, NFR-1, NFR-8, NFR-9) require human-supplied evidence. To produce a `GO` verdict, supply a reviewer-overrides YAML on the next run:
+The first run will exit with `INCOMPLETE` (exit code 3) — two documentation-review rows (IBD-1 and FR-4) require human-supplied evidence for GO. To produce a `GO` verdict, supply a reviewer-overrides YAML on the next run:
 
 ```bash
 ./bin/teranode-acceptance --short --config config.docker.yaml \
@@ -61,7 +61,7 @@ This project was developed in 11 sub-projects, each independently tagged. All co
 
 ## Test catalogue
 
-19 acceptance tests + 5 documentation/contractual rows requiring reviewer overrides.
+19 acceptance tests + 5 documentation/contractual rows accepting reviewer overrides; only FR-4 and IBD-1 gate GO.
 
 | ID | Severity | Source | What it measures |
 |---|---|---|---|
@@ -85,7 +85,7 @@ This project was developed in 11 sub-projects, each independently tagged. All co
 | NEW-NFR11 | Advisory | Derived (NFR-11) | TLS + auth probe (plain HTTP recorded as finding) |
 | NEW-NFR13 | Advisory | Derived (NFR-13) | Rate-limit discovery probe (configurable rate × duration) |
 
-The 5 documentation/contractual rows requiring reviewer overrides:
+The 5 documentation/contractual rows accepting reviewer overrides (only IBD-1 and FR-4 gate GO):
 - IBD-1 — Historical Validation Evidence Review (DOCUMENTATION_REVIEW)
 - FR-4 — Historical Chain Validation Evidence (DOCUMENTATION_REVIEW; verified by IBD-1 evidence)
 - NFR-1 — Upstream Availability Guarantees (LONG_TERM_OBSERVATION; 30-day uptime evidence)
@@ -96,17 +96,21 @@ See `docs/operator-guide.md` for how to supply these via the `--reviewer-overrid
 
 ## Reviewer overrides
 
-The runner alone cannot turn `INCOMPLETE` into `GO`. Five rows require human-supplied evidence (audit reports, uptime CSVs, contracts). The operator passes a YAML at `--reviewer-overrides`:
+The runner alone cannot turn `INCOMPLETE` into `GO`: FR-4 and IBD-1 require human-supplied historical-validation evidence. NFR-1, NFR-8 and NFR-9 also accept overrides (uptime records and contracts), but do not gate GO. The operator passes a YAML at `--reviewer-overrides`:
 
 ```yaml
-reviewer: "Lars Jorgensen <l.jorgensen@teranode.group>"
+reviewer: "BSVA release reviewer"
 reviewed_at: "2026-04-29T14:00:00Z"
 overrides:
   IBD-1:
     decision: PASS
     artefacts: ["bsva-audit-2026-q1.pdf"]
     note: "Reviewed BSVA's IBD report dated 2026-03-15."
-  # ... FR-4, NFR-1, NFR-8, NFR-9 similarly
+  FR-4:
+    decision: PASS
+    artefacts: ["bsva-audit-2026-q1.pdf"]
+    note: "Historical validation evidence reviewed."
+  # Optional: NFR-1, NFR-8 and NFR-9 with their own evidence.
 ```
 
 The override file is recorded into the JSON report under `run.reviewer_overrides` for audit. Without it, the verdict tops out at `INCOMPLETE`.
@@ -114,7 +118,7 @@ The override file is recorded into the JSON report under `run.reviewer_overrides
 ## Troubleshooting
 
 **`OPS-3` fails with "Metric `teranode_blockassembly_best_block_height` absent"**
-→ Likely Teranode-version drift since SP2 discovery (commit `11f5fa6a8…`). Update the metric-name set in `tests/ops3.go` to match v0.15.0-beta-2; commit; rerun.
+→ Likely Teranode-version drift since SP2 discovery (commit `11f5fa6a8…`). Update the metric-name set in `tests/ops3.go` to match the compose-pinned image; commit; rerun.
 
 **`PC-1` reorg phase fails ("svnode-1 did not reorg to T2")**
 → Check that teranode-1 has wallet support / can mine via `generatetoaddress`. The test depends on it being able to mine the longer chain.
@@ -135,7 +139,7 @@ For more, see `docs/operator-guide.md` and `docs/verdict-interpretation.md`.
 
 ## Version note
 
-The project's compose stack uses `ghcr.io/bsv-blockchain/teranode:v0.15.0-beta-2`. SP2 discovery (`docs/discovery.md`) was performed against commit `11f5fa6a81c36490e2796561f76a39294fc422b5` from a feature branch. The compose-pinned image may have been built from a different commit; if specific endpoint behaviour drifts, see the troubleshooting section.
+The project's compose stack pins `ghcr.io/bsv-blockchain/teranode:v0.15.1`. SP2 discovery (`docs/discovery.md`) was performed against commit `11f5fa6a81c36490e2796561f76a39294fc422b5` from a feature branch. The compose-pinned image may have been built from a different commit; if specific endpoint behaviour drifts, see the troubleshooting section.
 
 To upgrade Teranode:
 1. Update `compose/docker-compose.yml` to pin the new image tag.

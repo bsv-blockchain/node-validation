@@ -85,44 +85,32 @@ func RunNEWFR10(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	}
 
 	// (1) tx-by-id via REST.
-	txP95 := measureLatency(ctx, "tx-by-id", txids, func(id string) error {
+	txP95, txP95Check := historicalLatencyCheck(ctx, "tx-by-id", txids, target, func(id string) error {
 		_, err := env.Teranode.REST.GetTxBytes(ctx, id)
 		return err
 	})
 	res.Observations["tx_p95_ms"] = txP95.Milliseconds()
-	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		fmt.Sprintf("tx-by-id p95 ≤ %v", target),
-		txP95 <= target,
-		fmt.Sprintf("p95=%v target=%v sample=%d", txP95, target, len(txids)),
-	))
+	res.AcceptanceChecks = append(res.AcceptanceChecks, txP95Check)
 
 	// (2) block-by-hash via REST.
-	blockHashP95 := measureLatency(ctx, "block-by-hash", blockHashes, func(h string) error {
+	blockHashP95, blockHashP95Check := historicalLatencyCheck(ctx, "block-by-hash", blockHashes, target, func(h string) error {
 		_, err := env.Teranode.REST.GetBlockBytes(ctx, h)
 		return err
 	})
 	res.Observations["block_hash_p95_ms"] = blockHashP95.Milliseconds()
-	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		fmt.Sprintf("block-by-hash p95 ≤ %v", target),
-		blockHashP95 <= target,
-		fmt.Sprintf("p95=%v target=%v sample=%d", blockHashP95, target, len(blockHashes)),
-	))
+	res.AcceptanceChecks = append(res.AcceptanceChecks, blockHashP95Check)
 
 	// (3) block-by-height via /search?q=<height>.
 	heights := make([]string, 0, sampleN)
 	for h := 1; h <= sampleN; h++ {
 		heights = append(heights, strconv.Itoa(h))
 	}
-	blockHeightP95 := measureLatency(ctx, "block-by-height", heights, func(h string) error {
+	blockHeightP95, blockHeightP95Check := historicalLatencyCheck(ctx, "block-by-height (via /search)", heights, target, func(h string) error {
 		_, err := env.Teranode.REST.Search(ctx, h)
 		return err
 	})
 	res.Observations["block_height_p95_ms"] = blockHeightP95.Milliseconds()
-	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		fmt.Sprintf("block-by-height p95 ≤ %v (via /search)", target),
-		blockHeightP95 <= target,
-		fmt.Sprintf("p95=%v target=%v sample=%d", blockHeightP95, target, len(heights)),
-	))
+	res.AcceptanceChecks = append(res.AcceptanceChecks, blockHeightP95Check)
 
 	// (4) Address-history — absent in v0.15.0-beta-2 per SP2 discovery §2 gap
 	// 1; no /address/ route registered. Recorded as a non-required
@@ -137,4 +125,23 @@ func RunNEWFR10(ctx context.Context, env *testrunner.Env) testrunner.Result {
 
 	res.Status = deriveStatus(res.AcceptanceChecks)
 	return res
+}
+
+// A latency target is meaningful only when every requested probe succeeded.
+// Keep this local to NEW-FR10; other callers of measureLatency have their own gates.
+func historicalLatencyCheck(ctx context.Context, label string, inputs []string, target time.Duration, probe func(string) error) (time.Duration, testrunner.Check) {
+	completed, errors := 0, 0
+	p95 := measureLatency(ctx, label, inputs, func(input string) error {
+		completed++
+		err := probe(input)
+		if err != nil {
+			errors++
+		}
+		return err
+	})
+	return p95, required(
+		fmt.Sprintf("%s p95 ≤ %v", label, target),
+		completed > 0 && completed == len(inputs) && errors == 0 && p95 <= target,
+		fmt.Sprintf("p95=%v target=%v sample=%d completed=%d errors=%d", p95, target, len(inputs), completed, errors),
+	)
 }
