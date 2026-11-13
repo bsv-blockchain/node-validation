@@ -146,8 +146,8 @@ Check text is the description string in the code. `%d`, `%v` and `%s` are filled
 | PERF-1 | tests/perf1.go | Resource usage sampled from metrics endpoint (pass branch) | Deviates | No rationale recorded. |
 | PERF-1 | tests/perf1.go | Resource usage sampled from metrics endpoint (fail branch) | Deviates | Fails only when no metrics client is configured. |
 | PERF-1 | config.docker.yaml | perf1_max_tps: 100 | Deviates | No rationale recorded. |
-| PERF-1 | config.example.yaml | perf1_max_tps: 1000 | Plan | No rationale recorded. |
+| PERF-1 | config.example.yaml | perf1_max_tps: 1000 | Plan | `perf1_max_tps` only filters the ramp steps. With the listed steps, the run never exceeds 250 TPS. |
 | PERF-1 | config.docker.yaml | perf1_ramp_steps: [10, 50, 100, 250] | Deviates | No rationale recorded. |
-| PERF-1 | config.example.yaml | perf1_ramp_steps: [10, 50, 100, 250] | Deviates | Comment says to raise PERF1MaxTPS to extend the ramp. |
+| PERF-1 | config.example.yaml | perf1_ramp_steps: [10, 50, 100, 250] | Deviates | Steps top out at 250 TPS. `perf1_max_tps` only filters this list, so the run never exceeds 250 TPS. Add steps to extend. |
 | PERF-1 | config.docker.yaml | perf1_per_rate: 30s | Harness | No rationale recorded. |
 | PERF-1 | config.example.yaml | perf1_per_rate: 5m | Harness | No rationale recorded. |
