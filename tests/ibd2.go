@@ -56,7 +56,7 @@ func RunIBD2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["fixture_count"] = len(fixtures)
 
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		"≥10 IBD-2 fixtures present (per source plan IBD-2)",
+		"≥10 IBD-2 fixtures present (harness minimum)",
 		len(fixtures) >= 10,
 		fmt.Sprintf("loaded=%d", len(fixtures)),
 	))

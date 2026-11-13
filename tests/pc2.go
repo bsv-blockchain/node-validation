@@ -59,7 +59,7 @@ func RunPC2(ctx context.Context, env *testrunner.Env) testrunner.Result {
 	res.Observations["fixture_count"] = len(fixtures)
 
 	res.AcceptanceChecks = append(res.AcceptanceChecks, required(
-		"≥30 PC-2 fixtures present (per source plan PC-2)",
+		"≥30 PC-2 fixtures present (harness minimum)",
 		len(fixtures) >= 30,
 		fmt.Sprintf("loaded=%d", len(fixtures)),
 	))

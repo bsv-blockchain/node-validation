@@ -2,6 +2,13 @@
 
 External, black-box acceptance test suite for [Teranode](https://github.com/bsv-blockchain/teranode), driven by the *TNG Teranode Requirements and Test Plan* v1.3 (28/04/2026). Produces a complete report addressing every functional requirement, non-functional requirement, test environment item, source-plan test case, derived test case, and risk in the source document, with a final go / no-go verdict per the source plan's Decision Framework.
 
+## Source plan
+
+The source plan is owned and maintained by Teranode Group (TNG, Teranode UK Limited), a BSVA customer. It is confidential and shared under NDA, so it is not held in this repository. Ask TNG for access.
+
+- The traceability matrix below is the maintained catalogue. It covers the plan's test cases, and the derived NEW-* test cases. It records FR-8 as covered externally by Arc/Arcade.
+- [`docs/threshold-provenance.md`](docs/threshold-provenance.md) states, for each acceptance check, whether its threshold comes from the plan or from the harness, and where the harness deviates from the plan.
+
 ## Quickstart
 
 ```bash
