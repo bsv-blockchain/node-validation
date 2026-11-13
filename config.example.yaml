@@ -4,6 +4,8 @@
 # so a fresh `cp config.example.yaml config.yaml` will produce a config that
 # cannot accidentally hit a real production network.
 
+# Recorded acceptance runs use the Docker regtest stack (config.docker.yaml,
+# docs/compose.md). Testnet runs are out of scope (TE-1) and not documented.
 network: testnet                    # mainnet | testnet | regtest
 
 teranode:

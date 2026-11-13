@@ -168,7 +168,7 @@ func manifest() Manifest {
 		{
 			ID: "TE-1", Kind: KindTE,
 			Title: "Testnet Deployment",
-			Notes: "EXCLUDED_SETUP — pre-existing infrastructure expected; runner only validates connectivity.",
+			Notes: "EXCLUDED_SETUP — testnet runs are out of scope; all recorded runs use the Docker regtest stack (docs/compose.md). The runner makes no connectivity check.",
 		},
 		{
 			ID: "TE-2", Kind: KindTE,

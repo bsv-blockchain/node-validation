@@ -40,7 +40,7 @@
 
 | ID | Title | Notes |
 |---|---|---|
-| TE-1 | Testnet Deployment | EXCLUDED_SETUP — pre-existing infrastructure expected; runner only validates connectivity. |
+| TE-1 | Testnet Deployment | EXCLUDED_SETUP — testnet runs are out of scope; all recorded runs use the Docker regtest stack (docs/compose.md). The runner makes no connectivity check. |
 | TE-2 | Client Integration Sandbox | EXCLUDED_SETUP — this project IS the integration sandbox. |
 | TE-3 | Private Test Network | EXCLUDED_SETUP — optional setup, not used by any in-scope test. |
 
